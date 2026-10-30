@@ -3,7 +3,11 @@ import time
 from pathlib import Path
 
 import torch
+import torch.nn as nn
+from torch.utils.data import DataLoader
 
+from loader import get_datasets
+from models.pretrained import ArtClassifier
 
 DEVICE = "cuda" if torch.cuda.is_available() else "cpu"
 
@@ -65,3 +69,25 @@ def train(model, loss, optimizer, train_loader, val_loader, nb_epoch = 30, check
         "model_state_dict": model.state_dict(),
     }
     torch.save(payload, checkpoint_dir / "latest_model.pth")
+
+
+if __name__ == "__main__":
+    train_dt, val_dt, classes = get_datasets("./data/Art Movement/")
+    
+    BATCH_SIZE = 16
+    train_loader = DataLoader(train_dt, batch_size=BATCH_SIZE, shuffle=True, num_workers=4, pin_memory=True)
+    val_loader = DataLoader(val_dt, batch_size=BATCH_SIZE, shuffle=False, num_workers=4, pin_memory=True)
+
+    model = ArtClassifier(len(classes))
+    model = model.to(DEVICE)
+    loss = nn.CrossEntropyLoss()
+    optimizer = torch.optim.Adam(model.parameters(), lr=1e-4)
+
+    train(
+        model=model, 
+        loss=loss, 
+        optimizer=optimizer, 
+        train_loader=train_loader, 
+        val_loader=val_loader,
+        nb_epoch=15
+    )
