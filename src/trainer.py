@@ -11,6 +11,14 @@ from models.pretrained import ArtClassifier
 
 DEVICE = "cuda" if torch.cuda.is_available() else "cpu"
 
+def format_time(seconds: float) -> str:
+    seconds = max(0, int(seconds))
+    hours, remainder = divmod(seconds, 3600)
+    minutes, secs = divmod(remainder, 60)
+    if hours > 0:
+        return f"{hours}h {minutes:02d}m {secs:02d}s"
+    return f"{minutes}m {secs:02d}s"
+
 def train_one_epoch(model, loader, criterion, optimizer):
     model.train()
 
@@ -80,8 +88,8 @@ def train(model, loss, optimizer, train_loader, val_loader, nb_epoch = 30, check
             history.append(epoch_stats)
     
             print(
-                f"\n--- Fin Époque {epoch}/{nb_epoch+1} ({epoch_dur}) ---\n"
-                f"  Temps -> Écoulé: {total_elapsed} | ETA: {remaining}"
+                f"\n--- Fin Époque {epoch}/{nb_epoch+1} ({format_time(epoch_dur)}) ---\n"
+                f"  Temps -> Écoulé: {format_time(total_elapsed)} | ETA: {format_time(remaining)}"
             )
     
             with open(checkpoint_dir / "history.json", "w", encoding="utf-8") as f:
