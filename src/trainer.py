@@ -1,12 +1,14 @@
+import json
 import time
+from pathlib import Path
 
 import torch
+
 
 DEVICE = "cuda" if torch.cuda.is_available() else "cpu"
 
 def train_one_epoch(model, loader, criterion, optimizer):
     model.train()
-    start_time = time.time()
 
     running_loss = 0.0
 
@@ -22,6 +24,44 @@ def train_one_epoch(model, loader, criterion, optimizer):
 
         running_loss += loss.item()
 
-    print(f'elapsed : {time.time() - start_time}')
     return running_loss
 
+def train(model, loss, optimizer, train_loader, val_loader, nb_epoch = 30, checkpoint_dir = "./checkpoints/"):
+    checkpoint_dir = Path(checkpoint_dir)
+    checkpoint_dir.mkdir(parents=True, exist_ok=True)
+    history = []
+    start_time = time.time()
+    for epoch in range(1, nb_epoch + 1):
+            epoch_start = time.time()
+    
+            train_loss = train_one_epoch(
+                model=model,
+                loader=train_loader,
+                criterion=loss,
+                optimizer=optimizer,
+            )
+    
+            epoch_dur = time.time() - epoch_start
+            total_elapsed = time.time() - start_time
+            remaining = (nb_epoch+1 - epoch) * (total_elapsed / epoch)
+    
+            epoch_stats = {
+                "epoch": epoch,
+                "train_loss": train_loss,
+                "duration_sec": epoch_dur
+            }
+            history.append(epoch_stats)
+    
+            print(
+                f"\n--- Fin Époque {epoch}/{nb_epoch+1} ({epoch_dur}) ---\n"
+                f"  Temps -> Écoulé: {total_elapsed} | ETA: {remaining}"
+            )
+    
+            with open(checkpoint_dir / "history.json", "w", encoding="utf-8") as f:
+                json.dump(history, f, indent=2)
+
+    payload = {
+        "epoch": epoch,
+        "model_state_dict": model.state_dict(),
+    }
+    torch.save(payload, checkpoint_dir / "latest_model.pth")
