@@ -11,6 +11,7 @@ from loader import get_datasets
 from models.pretrained import ArtClassifier
 
 DEVICE = "cuda" if torch.cuda.is_available() else "cpu"
+PRINT_FREQUENCE = 20
 
 def format_time(seconds: float) -> str:
     seconds = max(0, int(seconds))
@@ -29,9 +30,11 @@ def compute_accuracy(outputs: torch.Tensor, targets: torch.Tensor):
 
 def train_one_epoch(model, loader, criterion, optimizer):
     model.train()
+    start_time = time.time()
 
     running_loss = 0.0
-    correct = 0
+    correct_top1 = 0.0
+    correct_top5 = 0.0
     total = 0
 
     for i, (images, targets) in enumerate(loader):
@@ -45,13 +48,24 @@ def train_one_epoch(model, loader, criterion, optimizer):
         loss.backward()
         optimizer.step()
 
-        running_loss += loss.item()
+        running_loss += loss.item() * batch_size
         top1, top5, preds, targs = compute_accuracy(outputs.detach(), targets)
         correct_top1 += top1
         correct_top5 += top5
         total += batch_size
 
-    return 100. * correct / total
+        if (i + 1) % PRINT_FREQUENCE == 0 or (i + 1) == len(loader):
+            elapsed = time.time() - start_time
+            speed = total / elapsed if elapsed > 0 else 0.0
+            remaining = len(loader) - (i + 1)
+            eta_sec = remaining * (elapsed / (i + 1))
+            print(
+                f"Étape [{i+1:4d}/{len(loader):4d}] | "
+                f"Loss: {loss.item():.4f} | Top-1: {100.0*top1/batch_size:5.1f}% | Top-5: {100.0*top5/batch_size:5.1f}% | "
+                f"Vitesse: {speed:5.1f} img/s | ETA: {format_time(eta_sec)}"
+            )
+
+    return running_loss / total, 100.0 * correct_top1 / total, 100.0 * correct_top5 / total
 
 @torch.no_grad()
 def evaluate(model, loader, criterion):
