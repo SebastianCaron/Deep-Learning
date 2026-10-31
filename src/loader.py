@@ -157,6 +157,28 @@ class ArtDataset(Dataset):
             
         return img, target
 
+def get_training_transform(img_size = 288):
+    return v2.Compose([
+        v2.RandomResizedCrop(size=(img_size, img_size), scale=(0.7, 1.0), interpolation=v2.InterpolationMode.BICUBIC),
+        v2.RandomHorizontalFlip(p=0.5),
+        v2.RandomRotation(degrees=15),
+        v2.ColorJitter(brightness=0.15, contrast=0.15, saturation=0.15, hue=0.04),
+        v2.ToImage(),
+        v2.ToDtype(torch.float32, scale=True),
+        v2.Normalize(mean=[0.485, 0.456, 0.406], std=[0.229, 0.224, 0.225]),
+        v2.RandomErasing(p=0.2, scale=(0.02, 0.2), value='random')
+    ])
+
+def get_eval_transfomrm(img_size = 288):
+    val_resize = int(img_size * 256 / 224)
+    return v2.Compose([
+        v2.Resize(val_resize, interpolation=v2.InterpolationMode.BICUBIC),
+        v2.CenterCrop(img_size),
+        v2.ToImage(),
+        v2.ToDtype(torch.float32, scale=True),
+        v2.Normalize(mean=[0.485, 0.456, 0.406], std=[0.229, 0.224, 0.225]),
+    ])
+
 def load_canonical_data(data_dir="./data/Art Movement/", train_ratio=0.8, seed=42, img_size=288):
     
     data_dir = Path(data_dir)
@@ -206,25 +228,8 @@ def load_canonical_data(data_dir="./data/Art Movement/", train_ratio=0.8, seed=4
         for p in val_paths:
             val_samples.append((p, cls_idx))
 
-    train_tf = v2.Compose([
-        v2.RandomResizedCrop(size=(img_size, img_size), scale=(0.7, 1.0), interpolation=v2.InterpolationMode.BICUBIC),
-        v2.RandomHorizontalFlip(p=0.5),
-        v2.RandomRotation(degrees=15),
-        v2.ColorJitter(brightness=0.15, contrast=0.15, saturation=0.15, hue=0.04),
-        v2.ToImage(),
-        v2.ToDtype(torch.float32, scale=True),
-        v2.Normalize(mean=[0.485, 0.456, 0.406], std=[0.229, 0.224, 0.225]),
-        v2.RandomErasing(p=0.2, scale=(0.02, 0.2), value='random')
-    ])
-
-    val_resize = int(img_size * 256 / 224)
-    val_tf = v2.Compose([
-        v2.Resize(val_resize, interpolation=v2.InterpolationMode.BICUBIC),
-        v2.CenterCrop(img_size),
-        v2.ToImage(),
-        v2.ToDtype(torch.float32, scale=True),
-        v2.Normalize(mean=[0.485, 0.456, 0.406], std=[0.229, 0.224, 0.225]),
-    ])
+    train_tf = get_training_transform(img_size=img_size)
+    val_tf = get_eval_transfomrm(img_size=img_size)
 
     train_dataset = ArtDataset(train_samples, transform=train_tf, classes=classes)
     val_dataset = ArtDataset(val_samples, transform=val_tf, classes=classes)
@@ -263,26 +268,9 @@ def get_datasets(data_dir=None, train_ratio=0.8, seed=42, img_size=288):
             val_indices.extend(indices[:n_val])
             train_indices.extend(indices[n_val:])
 
-    train_tf = v2.Compose([
-        v2.RandomResizedCrop(size=(img_size, img_size), scale=(0.7, 1.0), interpolation=v2.InterpolationMode.BICUBIC),
-        v2.RandomHorizontalFlip(p=0.5),
-        v2.RandomRotation(degrees=15),
-        v2.ColorJitter(brightness=0.15, contrast=0.15, saturation=0.15, hue=0.04),
-        v2.ToImage(),
-        v2.ToDtype(torch.float32, scale=True),
-        v2.Normalize(mean=[0.485, 0.456, 0.406], std=[0.229, 0.224, 0.225]),
-        v2.RandomErasing(p=0.2, scale=(0.02, 0.2), value='random')
-    ])
-
-    val_resize = int(img_size * 256 / 224)
-    val_tf = v2.Compose([
-        v2.Resize(val_resize, interpolation=v2.InterpolationMode.BICUBIC),
-        v2.CenterCrop(img_size),
-        v2.ToImage(),
-        v2.ToDtype(torch.float32, scale=True),
-        v2.Normalize(mean=[0.485, 0.456, 0.406], std=[0.229, 0.224, 0.225]),
-    ])
-
+    train_tf = get_training_transform(img_size=img_size)
+    val_tf = get_eval_transfomrm(img_size=img_size)
+    
     train_samples = [base_dataset.samples[i] for i in train_indices]
     val_samples = [base_dataset.samples[i] for i in val_indices]
     train_dataset = ArtDataset(train_samples, transform=train_tf, classes=classes)
