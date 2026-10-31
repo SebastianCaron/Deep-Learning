@@ -1,0 +1,11 @@
+data/
+data/*/*/*.jpg
+checkpoints/
+
+__pycache__/
+*.pyc
+.venv/
+venv/
+env/
+
+.DS_Store
