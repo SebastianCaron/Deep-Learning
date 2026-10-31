@@ -7,8 +7,9 @@ import torch
 import torch.nn as nn
 from torch.utils.data import DataLoader
 
-from loader import get_datasets
-from models.pretrained import ArtClassifier
+from loader import get_datasets, load_canonical_data
+from models.pretrained import ArtClassifier, ArtClassifierTinyBased
+from models.custom import CustomArtCNN
 
 DEVICE = "cuda" if torch.cuda.is_available() else "cpu"
 PRINT_FREQUENCE = 20
@@ -181,13 +182,16 @@ def train(model, loss, optimizer, scaler, train_loader, val_loader, nb_epoch = 3
 
 
 if __name__ == "__main__":
-    train_dt, val_dt, classes = get_datasets("./data/Art Movement/")
+    # train_dt, val_dt, classes = get_datasets("./data/Art Movement/")
+    train_dt, val_dt, classes, _ = load_canonical_data("./data/Art Movement/")
     
     BATCH_SIZE = 16
     train_loader = DataLoader(train_dt, batch_size=BATCH_SIZE, shuffle=True, num_workers=4, pin_memory=True)
     val_loader = DataLoader(val_dt, batch_size=BATCH_SIZE, shuffle=False, num_workers=4, pin_memory=True)
 
-    model = ArtClassifier(len(classes))
+    # model = ArtClassifier(len(classes))
+    model = ArtClassifierTinyBased(len(classes))
+    # model = CustomArtCNN(len(classes))
     model = model.to(DEVICE)
     loss = nn.CrossEntropyLoss()
     optimizer = torch.optim.Adam(model.parameters(), lr=1e-4)
