@@ -28,7 +28,7 @@ def compute_accuracy(outputs: torch.Tensor, targets: torch.Tensor):
     top5_correct = (top5_preds == targets.unsqueeze(1)).sum().item()
     return top1_correct, top5_correct, top1_preds, targets
 
-def train_one_epoch(model, loader, criterion, optimizer):
+def train_one_epoch(model, loader, criterion, optimizer, scaler):
     model.train()
     start_time = time.time()
 
@@ -42,11 +42,13 @@ def train_one_epoch(model, loader, criterion, optimizer):
         batch_size = targets.size(0)
 
         optimizer.zero_grad(set_to_none=True)
-        outputs = model(images)
-        loss = criterion(outputs, targets)
+        with torch.autocast(device_type='cuda', dtype=torch.float16):
+            outputs = model(images)
+            loss = criterion(outputs, targets)
 
-        loss.backward()
-        optimizer.step()
+        scaler.scale(loss).backward()
+        scaler.step(optimizer)
+        scaler.update()
 
         running_loss += loss.item() * batch_size
         top1, top5, preds, targs = compute_accuracy(outputs.detach(), targets)
@@ -106,12 +108,13 @@ def evaluate(model, loader, criterion):
 
     return epoch_loss, micro_acc, macro_acc, top5_acc, class_correct, class_total
 
-def train(model, loss, optimizer, train_loader, val_loader, nb_epoch = 30, checkpoint_dir = "./checkpoints/"):
+def train(model, loss, optimizer, scaler, train_loader, val_loader, nb_epoch = 30, checkpoint_dir = "./checkpoints/"):
     checkpoint_dir = Path(checkpoint_dir)
     checkpoint_dir.mkdir(parents=True, exist_ok=True)
     history = []
     start_time = time.time()
-    best_acc = 0
+    best_micro_acc = 0.0
+    best_loss = float("inf")
     for epoch in range(1, nb_epoch + 1):
             epoch_start = time.time()
     
@@ -120,6 +123,7 @@ def train(model, loss, optimizer, train_loader, val_loader, nb_epoch = 30, check
                 loader=train_loader,
                 criterion=loss,
                 optimizer=optimizer,
+                scaler=scaler
             )
     
             val_loss, micro_acc, macro_acc, top5_acc, class_correct, class_total = evaluate(
@@ -187,11 +191,13 @@ if __name__ == "__main__":
     model = model.to(DEVICE)
     loss = nn.CrossEntropyLoss()
     optimizer = torch.optim.Adam(model.parameters(), lr=1e-4)
+    scaler = torch.GradScaler()
 
     train(
         model=model, 
         loss=loss, 
         optimizer=optimizer, 
+        scaler=scaler,
         train_loader=train_loader, 
         val_loader=val_loader,
         nb_epoch=15
