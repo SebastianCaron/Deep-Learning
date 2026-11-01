@@ -109,13 +109,15 @@ def evaluate(model, loader, criterion):
 
     return epoch_loss, micro_acc, macro_acc, top5_acc, class_correct, class_total
 
-def train(model, loss, optimizer, scaler, train_loader, val_loader, nb_epoch = 30, checkpoint_dir = "./checkpoints/"):
+def train(model, loss, optimizer, scaler, train_loader, val_loader, nb_epoch = 30, checkpoint_dir = "./checkpoints/", early_stop : int | None = None):
     checkpoint_dir = Path(checkpoint_dir)
     checkpoint_dir.mkdir(parents=True, exist_ok=True)
     history = []
     start_time = time.time()
     best_micro_acc = 0.0
     best_loss = float("inf")
+    early_stopping = early_stop is not None
+    patience = 0
     for epoch in range(1, nb_epoch + 1):
             epoch_start = time.time()
     
@@ -178,6 +180,13 @@ def train(model, loss, optimizer, scaler, train_loader, val_loader, nb_epoch = 3
             if val_loss < best_loss:
                 best_loss = val_loss
                 torch.save(payload, checkpoint_dir / "best_loss_model.pth")
+                patience = 0
+            elif early_stopping:
+                patience += 1
+                if patience == early_stop:
+                    print(f"Early Stop, dégradation de la validation sur {patience} tours consecutifs.")
+                    break
+            
 
 
 
@@ -204,5 +213,6 @@ if __name__ == "__main__":
         scaler=scaler,
         train_loader=train_loader, 
         val_loader=val_loader,
-        nb_epoch=15
+        nb_epoch=15,
+        early_stop=2
     )
