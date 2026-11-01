@@ -20,12 +20,12 @@ def build_gallery_index(
 ):
     if device is None:
         device = "cuda" if torch.cuda.is_available() else "cpu"
-    print(f"Using device: {device}")
+    print(f"Using device: {device}", file=sys.stderr)
 
     # La data
     train_ds, val_ds, classes, _ = load_canonical_data(data_dir=data_dir)
-    print(f"Canonical classes ({len(classes)}): {classes}")
-    print(f"Gallery will index {len(val_ds)} validation artworks.")
+    print(f"Canonical classes ({len(classes)}): {classes}", file=sys.stderr)
+    print(f"Gallery will index {len(val_ds)} validation artworks.", file=sys.stderr)
 
     # Le model
     model = ArtClassifierTinyBased(nb_classes=len(classes)).to(device)
@@ -99,7 +99,7 @@ def build_gallery_index(
     out_p.parent.mkdir(parents=True, exist_ok=True)
     torch.save(gallery_data, out_p)
     duration = time.time() - t0
-    print(f"Saved gallery index with {len(paths)} artworks to {output_path} in {duration:.1f}s.")
+    print(f"Saved gallery index with {len(paths)} artworks to {output_path} in {duration:.1f}s.", file=sys.stderr)
 
 
 if __name__ == "__main__":
