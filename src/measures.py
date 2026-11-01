@@ -14,9 +14,9 @@ from models.pretrained import ArtClassifier, ArtClassifierTinyBased
 from trainer import train
 
 # CONFIGS EDIT HERE
-EARLY_STOP_VALUES = [None, 0, 2, 5]
-EPOCHS = [10, 20, 30]
-AVERAGE_ON = 5
+EARLY_STOP_VALUES = [None, 2]
+EPOCHS = [10, 20]
+AVERAGE_ON = 2
 DATA_PATH = "./data/Art Movement/"
 DEVICE = "cuda" if torch.cuda.is_available() else "cpu"
 BATCH_SIZE = 16
@@ -28,9 +28,9 @@ DATA_LOADERS = {
 }
 
 MODELS = {
-    "CustomArtCNN": CustomArtCNN,
+    # "CustomArtCNN": CustomArtCNN,
     "ArtClassifier": ArtClassifier,
-    "ArtClassifierTinyBased": ArtClassifierTinyBased,
+    # "ArtClassifierTinyBased": ArtClassifierTinyBased,
 }
 
 
