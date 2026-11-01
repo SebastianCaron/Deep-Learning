@@ -1,0 +1,45 @@
+{
+  "num_runs": 2,
+  "best_val_micro_top1": {
+    "mean": 66.1243,
+    "std": 0.3633
+  },
+  "best_val_macro_top1": {
+    "mean": 12.4085,
+    "std": 0.2595
+  },
+  "best_val_loss": {
+    "mean": 1.1263,
+    "std": 0.0262
+  },
+  "best_val_top5": {
+    "mean": 91.6809,
+    "std": 0.1038
+  },
+  "final_val_micro_top1": {
+    "mean": 64.7419,
+    "std": 0.4844
+  },
+  "final_val_macro_top1": {
+    "mean": 11.3986,
+    "std": 0.4154
+  },
+  "final_val_loss": {
+    "mean": 1.1725,
+    "std": 0.0179
+  },
+  "final_val_top5": {
+    "mean": 91.4974,
+    "std": 0.0519
+  },
+  "stopped_epoch": {
+    "mean": 10.0,
+    "std": 0.0
+  },
+  "config": {
+    "model": "ArtClassifier",
+    "dataloader": "simple",
+    "nb_epochs": 10,
+    "early_stop": null
+  }
+}
