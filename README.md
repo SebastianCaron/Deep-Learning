@@ -1,6 +1,6 @@
 # Deep Learning — Classification & Exploration d'oeuvres d'Art
 
-![La Nuit étoilée, Vincent van Gogh, 1888](https://upload.wikimedia.org/wikipedia/commons/0/01/Vincent_van_Gogh_-_Starry_Night_-_Google_Art_Project.jpg?utm_source=fr.wikipedia.org&utm_campaign=index&utm_content=original)
+![La Nuit étoilée, Vincent van Gogh, 1888](./starry.jpg)
 
 
 Projet de Deep Learning (M2) dédié à la classification de styles artistiques et à l'exploration sémantique d'oeuvres d'art à travers leurs représentations latentes, intégrant un serveur **MCP (Model Context Protocol)**.
