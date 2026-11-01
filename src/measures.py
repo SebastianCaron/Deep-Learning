@@ -38,6 +38,28 @@ def format_early_stop(val: int | None) -> str:
     return str(val) if val is not None else "none"
 
 
+def is_run_completed(run_dir: Path) -> bool:
+    final_model_path = run_dir / "final_model.pth"
+    history_path = run_dir / "history.json"
+    if not (final_model_path.exists() and history_path.exists()):
+        return False
+    try:
+        with open(history_path, "r", encoding="utf-8") as f:
+            data = json.load(f)
+            return isinstance(data, list) and len(data) > 0
+    except Exception:
+        return False
+
+
+def is_config_completed(config_dir: Path, expected_runs: int) -> bool:
+    if not (config_dir / "config_summary.json").exists() or not (config_dir / "config_history.json").exists():
+        return False
+    for r in range(1, expected_runs + 1):
+        if not is_run_completed(config_dir / f"run_{r}"):
+            return False
+    return True
+
+
 def get_config_key(
     model_name: str,
     dataloader_name: str,
@@ -219,6 +241,16 @@ def run_measures(
                     )
                     config_dir.mkdir(parents=True, exist_ok=True)
 
+                    if is_config_completed(config_dir, average_on):
+                        print(f"\n[Reprise] Configuration déjà terminée ({average_on}/{average_on} runs) : {config_key}. Ignorée.")
+                        if config_key not in all_histories and (config_dir / "config_history.json").exists():
+                            with open(config_dir / "config_history.json", "r", encoding="utf-8") as f:
+                                all_histories[config_key] = json.load(f)
+                        if config_key not in all_summaries and (config_dir / "config_summary.json").exists():
+                            with open(config_dir / "config_summary.json", "r", encoding="utf-8") as f:
+                                all_summaries[config_key] = json.load(f)
+                        continue
+
                     print("\n" + "=" * 80)
                     print(f"CONFIGURATION [{current_config_idx}/{total_configs}] : {config_key}")
                     print(f"Dossier de sauvegarde : {config_dir.resolve()}")
@@ -230,6 +262,13 @@ def run_measures(
                         run_label = f"run_{run_idx + 1}"
                         run_dir = config_dir / run_label
                         run_dir.mkdir(parents=True, exist_ok=True)
+
+                        if is_run_completed(run_dir):
+                            print(f"  [Reprise] {run_label} déjà complété avec succès pour {config_key}. Chargement de l'historique...")
+                            with open(run_dir / "history.json", "r", encoding="utf-8") as f:
+                                history = json.load(f)
+                            config_histories.append(history)
+                            continue
 
                         print(f"\n>>> Début {run_label}/{average_on} pour {config_key} <<<")
 
