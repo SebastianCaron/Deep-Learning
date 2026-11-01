@@ -232,6 +232,6 @@ if __name__ == "__main__":
         scaler=scaler,
         train_loader=train_loader, 
         val_loader=val_loader,
-        early_stop=early_stopper,
+        early_stopper=early_stopper,
         nb_epoch=15,
     )
