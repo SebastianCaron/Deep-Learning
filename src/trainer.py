@@ -10,6 +10,7 @@ from torch.utils.data import DataLoader
 from loader import get_datasets, load_canonical_data
 from models.pretrained import ArtClassifier, ArtClassifierTinyBased
 from models.custom import CustomArtCNN
+from early_stopping import EarlyStopper
 
 DEVICE = "cuda" if torch.cuda.is_available() else "cpu"
 PRINT_FREQUENCE = 20
@@ -109,75 +110,101 @@ def evaluate(model, loader, criterion):
 
     return epoch_loss, micro_acc, macro_acc, top5_acc, class_correct, class_total
 
-def train(model, loss, optimizer, scaler, train_loader, val_loader, nb_epoch = 30, checkpoint_dir = "./checkpoints/"):
+def train(
+    model,
+    loss,
+    optimizer,
+    scaler,
+    train_loader,
+    val_loader,
+    early_stopper: None | EarlyStopper,
+    nb_epoch: int = 30,
+    checkpoint_dir: str | Path = "./checkpoints/",
+    restore_best_weights: bool = True,
+):
     checkpoint_dir = Path(checkpoint_dir)
     checkpoint_dir.mkdir(parents=True, exist_ok=True)
     history = []
     start_time = time.time()
     best_micro_acc = 0.0
     best_loss = float("inf")
+ 
     for epoch in range(1, nb_epoch + 1):
-            epoch_start = time.time()
-    
-            train_loss, train_top1, train_top5 = train_one_epoch(
-                model=model,
-                loader=train_loader,
-                criterion=loss,
-                optimizer=optimizer,
-                scaler=scaler
-            )
-    
-            val_loss, micro_acc, macro_acc, top5_acc, class_correct, class_total = evaluate(
-                model=model,
-                loader=val_loader,
-                criterion=loss,
-            )
-    
-            epoch_dur = time.time() - epoch_start
-            total_elapsed = time.time() - start_time
-            remaining = (nb_epoch+1 - epoch) * (total_elapsed / epoch)
-    
-            epoch_stats = {
-                "epoch": epoch,
-                "train_loss": train_loss,
-                "train_top1": train_top1,
-                "train_top5": train_top5,
-                "val_loss": val_loss,
-                "val_micro_top1": micro_acc,
-                "val_macro_top1": macro_acc,
-                "val_top5": top5_acc,
-                "duration_sec": epoch_dur
-            }
-            history.append(epoch_stats)
-    
-            print(
-                f"\n--- Fin Époque {epoch}/{nb_epoch+1} ({format_time(epoch_dur)}) ---\n"
-                f"  Train -> Loss: {train_loss:.4f} | Top-1: {train_top1:5.2f}% | Top-5: {train_top5:5.2f}%\n"
-                f"  Val   -> Loss: {val_loss:.4f} | Micro Top-1: {micro_acc:5.2f}% | Macro Top-1: {macro_acc:5.2f}% | Top-5: {top5_acc:5.2f}%\n"
-                f"  Temps -> Écoulé: {format_time(total_elapsed)} | ETA: {format_time(remaining)}"
-            )
-    
-            payload = {
-                "epoch": epoch,
-                "model_state_dict": model.state_dict(),
-                "val_micro_top1": micro_acc,
-                "val_macro_top1": macro_acc,
-                "val_top5": top5_acc,
-                "val_loss": val_loss,
-            }
-            torch.save(payload, checkpoint_dir / "latest_model.pth")
-    
-            with open(checkpoint_dir / "history.json", "w", encoding="utf-8") as f:
-                json.dump(history, f, indent=2)
+        epoch_start = time.time()
 
-            if micro_acc > best_micro_acc:
-                best_micro_acc = micro_acc
-                torch.save(payload, checkpoint_dir / "best_model.pth")
-                print(f"  >>> Nouveau record Micro Top-1 : {best_micro_acc:5.2f}% (Sauvegardé !) <<<")
-    
-            if val_loss < best_loss:
-                best_loss = val_loss
-                torch.save(payload, checkpoint_dir / "best_loss_model.pth")
+        train_loss, train_top1, train_top5 = train_one_epoch(
+            model=model,
+            loader=train_loader,
+            criterion=loss,
+            optimizer=optimizer,
+            scaler=scaler,
+        )
+
+        val_loss, micro_acc, macro_acc, top5_acc, class_correct, class_total = evaluate(
+            model=model,
+            loader=val_loader,
+            criterion=loss,
+        )
+
+        epoch_dur = time.time() - epoch_start
+        total_elapsed = time.time() - start_time
+        remaining = (nb_epoch - epoch) * (total_elapsed / epoch)
+
+        epoch_stats = {
+            "epoch": epoch,
+            "train_loss": train_loss,
+            "train_top1": train_top1,
+            "train_top5": train_top5,
+            "val_loss": val_loss,
+            "val_micro_top1": micro_acc,
+            "val_macro_top1": macro_acc,
+            "val_top5": top5_acc,
+            "duration_sec": epoch_dur,
+        }
+        history.append(epoch_stats)
+
+        print(
+            f"\n--- Fin Époque {epoch}/{nb_epoch} ({format_time(epoch_dur)}) ---\n"
+            f"  Train -> Loss: {train_loss:.4f} | Top-1: {train_top1:5.2f}% | Top-5: {train_top5:5.2f}%\n"
+            f"  Val   -> Loss: {val_loss:.4f} | Micro Top-1: {micro_acc:5.2f}% | Macro Top-1: {macro_acc:5.2f}% | Top-5: {top5_acc:5.2f}%\n"
+            f"  Temps -> Écoulé: {format_time(total_elapsed)} | ETA: {format_time(remaining)}"
+        )
+
+        payload = {
+            "epoch": epoch,
+            "model_state_dict": model.state_dict(),
+            "val_micro_top1": micro_acc,
+            "val_macro_top1": macro_acc,
+            "val_top5": top5_acc,
+            "val_loss": val_loss,
+        }
+        torch.save(payload, checkpoint_dir / "latest_model.pth")
+
+        with open(checkpoint_dir / "history.json", "w", encoding="utf-8") as f:
+            json.dump(history, f, indent=2)
+
+        if micro_acc > best_micro_acc:
+            best_micro_acc = micro_acc
+            torch.save(payload, checkpoint_dir / "best_model.pth")
+            print(f"  >>> Nouveau record Micro Top-1 : {best_micro_acc:5.2f}% (Sauvegardé !) <<<")
+
+        if val_loss < best_loss:
+            best_loss = val_loss
+            torch.save(payload, checkpoint_dir / "best_loss_model.pth")
+
+        if early_stopper and early_stopper.step(val_loss):
+            print(
+                f"\n[Early Stop] Arrêt anticipé à l'époque {epoch} "
+                f"(aucune amélioration significative sur {early_stopper.counter} époques consécutives)."
+            )
+            if restore_best_weights and (checkpoint_dir / "best_loss_model.pth").exists():
+                print("  -> Restauration des poids du meilleur modèle (best_loss_model.pth)...")
+                best_ckpt = torch.load(checkpoint_dir / "best_loss_model.pth", map_location=DEVICE, weights_only=True)
+                model.load_state_dict(best_ckpt["model_state_dict"])
+            break
+
+    return history
+            
 
 
 
@@ -196,6 +223,7 @@ if __name__ == "__main__":
     loss = nn.CrossEntropyLoss()
     optimizer = torch.optim.Adam(model.parameters(), lr=1e-4)
     scaler = torch.GradScaler()
+    early_stopper = EarlyStopper(patience=2, min_delta=1e-4, mode="min")
 
     train(
         model=model, 
@@ -204,5 +232,6 @@ if __name__ == "__main__":
         scaler=scaler,
         train_loader=train_loader, 
         val_loader=val_loader,
-        nb_epoch=15
+        early_stopper=early_stopper,
+        nb_epoch=15,
     )
