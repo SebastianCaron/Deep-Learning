@@ -118,6 +118,7 @@ def train(
     train_loader,
     val_loader,
     early_stopper: None | EarlyStopper,
+    test_loader: None | DataLoader = None,
     nb_epoch: int = 30,
     checkpoint_dir: str | Path = "./checkpoints/",
     restore_best_weights: bool = True,
@@ -197,11 +198,37 @@ def train(
                 f"\n[Early Stop] Arrêt anticipé à l'époque {epoch} "
                 f"(aucune amélioration significative sur {early_stopper.counter} époques consécutives)."
             )
-            if restore_best_weights and (checkpoint_dir / "best_loss_model.pth").exists():
-                print("  -> Restauration des poids du meilleur modèle (best_loss_model.pth)...")
-                best_ckpt = torch.load(checkpoint_dir / "best_loss_model.pth", map_location=DEVICE, weights_only=True)
-                model.load_state_dict(best_ckpt["model_state_dict"])
             break
+
+    if restore_best_weights and (checkpoint_dir / "best_loss_model.pth").exists():
+        print("  -> Restauration des poids du meilleur modèle (best_loss_model.pth)...")
+        best_ckpt = torch.load(checkpoint_dir / "best_loss_model.pth", map_location=DEVICE, weights_only=True)
+        model.load_state_dict(best_ckpt["model_state_dict"])
+
+    if test_loader is not None:
+        print("\n" + "=" * 80)
+        print(">>> ÉVALUATION FINALE SUR LE JEU DE TEST (INÉDIT — 10%) <<<")
+        print("=" * 80)
+        test_loss, t_micro, t_macro, t_top5, _, _ = evaluate(
+            model=model,
+            loader=test_loader,
+            criterion=loss,
+        )
+        test_results = {
+            "test_loss": test_loss,
+            "test_micro_top1": t_micro,
+            "test_macro_top1": t_macro,
+            "test_top5": t_top5,
+        }
+        print(
+            f"  Test -> Loss: {test_loss:.4f} | "
+            f"Micro Top-1: {t_micro:5.2f}% | "
+            f"Macro Top-1: {t_macro:5.2f}% | "
+            f"Top-5: {t_top5:5.2f}%\n"
+            f"=" * 80
+        )
+        with open(checkpoint_dir / "test_results.json", "w", encoding="utf-8") as f:
+            json.dump(test_results, f, indent=2)
 
     return history
             
@@ -209,12 +236,23 @@ def train(
 
 
 if __name__ == "__main__":
-    # train_dt, val_dt, classes = get_datasets("./data/Art Movement/")
-    train_dt, val_dt, classes, _ = load_canonical_data("./data/Art Movement/")
+    train_dt, val_dt, test_dt, classes, _ = load_canonical_data(
+        "./data/Art Movement/",
+        train_ratio=0.8,
+        val_ratio=0.1,
+        test_ratio=0.1,
+    )
     
     BATCH_SIZE = 16
     train_loader = DataLoader(train_dt, batch_size=BATCH_SIZE, shuffle=True, num_workers=4, pin_memory=True)
     val_loader = DataLoader(val_dt, batch_size=BATCH_SIZE, shuffle=False, num_workers=4, pin_memory=True)
+    test_loader = DataLoader(test_dt, batch_size=BATCH_SIZE, shuffle=False, num_workers=4, pin_memory=True)
+
+    print(f"Répartition des données (80/10/10%) :")
+    print(f"  - Train      : {len(train_dt):5d} images")
+    print(f"  - Validation : {len(val_dt):5d} images")
+    print(f"  - Test       : {len(test_dt):5d} images")
+    print(f"  - Total      : {len(train_dt) + len(val_dt) + len(test_dt):5d} images ({len(classes)} classes)\n")
 
     # model = ArtClassifier(len(classes))
     model = ArtClassifierTinyBased(len(classes))
@@ -232,6 +270,7 @@ if __name__ == "__main__":
         scaler=scaler,
         train_loader=train_loader, 
         val_loader=val_loader,
+        test_loader=test_loader,
         early_stopper=early_stopper,
         nb_epoch=15,
     )
