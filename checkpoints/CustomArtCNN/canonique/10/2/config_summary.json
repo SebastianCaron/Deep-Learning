@@ -1,0 +1,45 @@
+{
+  "num_runs": 1,
+  "best_val_micro_top1": {
+    "mean": 66.073,
+    "std": 0.0
+  },
+  "best_val_macro_top1": {
+    "mean": 19.1967,
+    "std": 0.0
+  },
+  "best_val_loss": {
+    "mean": 1.2088,
+    "std": 0.0
+  },
+  "best_val_top5": {
+    "mean": 87.1717,
+    "std": 0.0
+  },
+  "final_val_micro_top1": {
+    "mean": 65.5599,
+    "std": 0.0
+  },
+  "final_val_macro_top1": {
+    "mean": 17.5067,
+    "std": 0.0
+  },
+  "final_val_loss": {
+    "mean": 1.2088,
+    "std": 0.0
+  },
+  "final_val_top5": {
+    "mean": 87.1717,
+    "std": 0.0
+  },
+  "stopped_epoch": {
+    "mean": 10.0,
+    "std": 0.0
+  },
+  "config": {
+    "model": "CustomArtCNN",
+    "dataloader": "canonique",
+    "nb_epochs": 10,
+    "early_stop": 2
+  }
+}
