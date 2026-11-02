@@ -16,6 +16,7 @@ classoption:
 monofont: "DejaVu Sans Mono"
 header-includes:
   - |
+    ```{=latex}
     \usepackage{booktabs}
     \usepackage{array}
     \usepackage{calc}
@@ -28,19 +29,27 @@ header-includes:
     \renewcommand{\floatpagefraction}{0.85}
     \renewcommand{\dblfloatpagefraction}{0.85}
     \makeatletter
-    \let\oldlt\longtable
-    \let\endoldlt\endlongtable
+    \renewcommand\paragraph{\@startsection{paragraph}{4}{\z@}%
+      {-2.5ex\@plus -1ex \@minus -.25ex}%
+      {0.8ex \@plus .2ex}%
+      {\normalfont\normalsize\bfseries}}
     \def\longtable{\@ifnextchar[{\@longtable@opt}{\@longtable@opt[]}}
+    \def\handle@caption#1#2\tabularnewline{%
+      \par\vspace{3pt}{\bfseries\small #2}\par\vspace{4pt}%
+      \do@tabular
+    }
     \def\@longtable@opt[#1]#2{%
       \begin{table*}[tbp]\centering\footnotesize
+      \def\endfirsthead##1\endhead{}%
       \def\endhead{}%
-      \def\endfirsthead{}%
       \def\endfoot{}%
       \def\endlastfoot{}%
-      \begin{tabular}{#2}%
+      \def\do@tabular{\begin{tabular}{#2}}%
+      \@ifnextchar\caption{\handle@caption}{\do@tabular}%
     }
     \def\endlongtable{\end{tabular}\end{table*}}
     \makeatother
+    ```
 ---
 
 Ce projet consiste à classifier le style artistique d'oeuvres d'art à travers leurs représentations latentes, intégrant un serveur MCP (Model Context Protocol).
@@ -142,12 +151,13 @@ project/
    - Construit les pipelines de transformation avec `torchvision.transforms.v2` (augmentations riches en entraînement, redimensionnement bicubique et recadrage centré).
 2. **`src/models/`** :
    - [`CustomArtCNN`](../src/models/custom.py) : CNN classique à 4 blocs convolutionnels avec normalisation par lots, servant de baseline entraînée à partir de zéro (*from scratch*).
-    - [`ArtClassifier`](../src/models/pretrained.py) : Modèle s'appuyant sur un backbone `resnet50` pré-entraîné, projeté dans un espace latent à 512 dimensions avant la tête de classification.
+   - [`ArtClassifier`](../src/models/pretrained.py) : Modèle s'appuyant sur un backbone `resnet50` pré-entraîné, projeté dans un espace latent à 512 dimensions avant la tête de classification.
    - [`ArtClassifierTinyBased`](../src/models/pretrained.py) : Modèle de production s'appuyant sur un backbone `convnext_tiny` pré-entraîné, projeté dans un espace latent à 512 dimensions avant la tête de classification.
 3. **`src/serv_mcp/`** :
    - Implémente le protocole MCP (*Model Context Protocol*) permettant à des LLM (comme Claude, Antigravity ou Gemini) d'invoquer le modèle de vision en tant qu'outil outillé (*tool use*).
 4. **`src/trainer.py` & `src/early_stopping.py`** :
-   * Assurent un entraînement robuste avec précision mixte AMP (`torch.autocast(fp16)`), suivi en temps réel de la loss et des métriques Micro/Macro Top-1 et Top-5, ainsi que l'arrêt anticipé avec restauration automatique du meilleur checkpoint.
+   - Assurent un entraînement robuste avec précision mixte AMP (`torch.autocast(fp16)`), suivi en temps réel de la loss et des métriques Micro/Macro Top-1 et Top-5, ainsi que l'arrêt anticipé avec restauration automatique du meilleur checkpoint.
+
 ---
 
 ## 2. Implémentation du serveur MCP
@@ -161,8 +171,9 @@ L'implémentation du serveur MCP, baptisé `ArtExplorerMCP`, a été conçue sel
 Pour garantir un meilleur temps de réponse lors des requêtes de similarité, on a développé un script d'indexation préalable. Il charge le jeu de validation canonique (21 mouvements artistiques) ainsi que le modèle `ArtClassifierTinyBased` depuis le checkpoint `best_model.pth`. 
 
 Chaque oeuvre passe dans le réseau en mode évaluation pour en extraire :
-* Le vecteur de caractéristiques dans l'espace latent.
-* La classe prédite et le score de confiance associé.
+
+- Le vecteur de caractéristiques dans l'espace latent.
+- La classe prédite et le score de confiance associé.
 
 Ces tenseurs sont enrichis avec les métadonnées (identifiant, chemin local, titre de l'oeuvre, auteur extrait de `label_list.csv`, style réel) puis sérialisés dans un fichier unique `checkpoints/gallery_index.pt`.
 
@@ -175,19 +186,18 @@ Le moteur gère également le prétraitement des images à la volée : conversio
 #### Résolution flexible des entrées et gestion du cache (`utils.py`)
 
 Afin de rendre le serveur robuste aux différentes requêtes d'un agent conversationnel, le module utilitaire implémente une fonction de résolution intelligente (`resolve_image`). L'utilisateur ou le LLM peut fournir indifféremment :
+
 1. **Une URL web (`http://` ou `https://`)** : l'image est téléchargée à la volée et mise en cache localement dans `data/cache_mcp` avec un nommage unique basé sur un hachage `MD5` de l'URL afin d'éviter les téléchargements redondants.
 2. **Un chemin de fichier local** (absolu ou relatif).
 3. **Un simple identifiant ou nom de fichier d'oeuvre** : le système effectue une correspondance directe via un dictionnaire d'indexation (`id_to_gallery_idx`) ou lance une recherche par motif (`glob`) dans l'arborescence locale `data/Art Movement`.
 
 Ce module assure également la réconciliation des métadonnées entre le fichier CSV des labels et la taxonomie des dossiers.
 
-#### Couche serveur et protocole de communication (`mcp_server.py`)
-
-Le point d'entrée utilise la classe `MCPServer` du SDK MCP. Il expose les fonctions métiers à l'aide du décorateur `@mcp.tool()` et communique avec le client via le transport standard d'entrée/sortie (`stdio`). Cela permet une intégration locale directe et sans latence réseau avec des clients compatibles (comme Claude Desktop ou des IDE).
-
 ### B. Description des Tools mis à disposition
 
-Quatre outils (*tools*) sont exposés par le serveur dans `mcp_server.py` et implémentés dans `tools.py` :
+Quatre outils (*tools*) sont exposés par le serveur dans `mcp_server.py`, implémentés dans `tools.py` et synthétisés dans le **Tableau 1** :
+
+Table: Tableau 1. Outils exposés par le serveur ArtExplorerMCP
 
 | Nom de l'outil | Paramètres | Rôle et données retournées |
 | :--- | :--- | :--- |
@@ -201,6 +211,7 @@ Quatre outils (*tools*) sont exposés par le serveur dans `mcp_server.py` et imp
 #### Guidage implicite dans le code
 
 Dans l'implémentation actuelle, le guidage sémantique du modèle de langage repose sur deux mécanismes :
+
 - **Les docstrings structurées des outils** : Chaque fonction décorée par `@mcp.tool()` possède une documentation détaillée en français précisant le rôle métier, l'interprétation artistique possible et le format des arguments.
 - **L'enrichissement textuel des sorties** : L'outil `find_cross_style_neighbors` génère automatiquement un champ pré-rédigé (`stylistic_observation`) dans sa réponse JSON (*« Bien qu'étiqueté comme 'X', ce tableau partage Y% de similarité latente avec 'Z'. »*), guidant directement l'interprétation finale de l'assistant.
 
@@ -211,8 +222,8 @@ Dans l'implémentation actuelle, le guidage sémantique du modèle de langage re
 Le modèle sélectionné pour le déploiement est **`ArtClassifierTinyBased`**, implémenté dans [`src/models/pretrained.py`](../src/models/pretrained.py). 
 
 Il se compose de :
+
 1. **Backbone ConvNeXt-Tiny** :
-   - Modèle convolutionnel moderne incorporant les avancées des Vision Transformers (convolutions séparables en profondeur $7 \times 7$, normalisation `LayerNorm`, activations `GELU`, expansion inversée $1 \times 1 \to 7 \times 7 \to 1 \times 1$).
    - Pré-entraîné sur ImageNet-1K (`ConvNeXt_Tiny_Weights.DEFAULT`), fournissant une extraction robuste de descripteurs visuels de bas et moyen niveau (bords, textures, contrastes, compositions).
    - Dimension de sortie du pooling adaptatif : **768 dimensions**.
 2. **Tête de Projection Latente (Espace d'Embedding)** :
@@ -228,7 +239,9 @@ Il se compose de :
 
 ### 3.2 Justification des Hyperparamètres
 
-Le choix des hyperparamètres a été guidé à la fois par la théorie en computer vision et par les contraintes matérielles réelles de notre banc d'essai (GPU NVIDIA RTX 3050 Laptop / 4 Go de VRAM).
+Le choix des hyperparamètres a été guidé à la fois par la théorie en computer vision et par les contraintes matérielles réelles de notre banc d'essai (GPU NVIDIA RTX 3050 Laptop / 4 Go de VRAM), synthétisés dans le **Tableau 2** :
+
+Table: Tableau 2. Hyperparamètres d'entraînement et justifications théoriques
 
 | Hyperparamètre | Valeur retenue | Justification théorique et expérimentale |
 | :----------------------------------------- | :----------------------------------: | :------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
@@ -248,6 +261,7 @@ Le choix des hyperparamètres a été guidé à la fois par la théorie en compu
 ### 3.3 Choix des Classes & Canonisation Taxonomique
 
 Le jeu de données brut **ART500K** organise initialement ses dossiers en plus de 117 sous-dossiers très fragmentés, présentant des redondances lexicales et historiques majeures :
+
 - Des subdivisions d'un même courant : *Florentine painting*, *Venetian school*, *Bolognese School*, *Northern Renaissance* coexistaient avec *Renaissance*.
 - Des catégories génériques englobantes : *Modern art* et *Modernism*.
 - Des dénominations doublons : *Social realism* et *Socialist realism*.
@@ -258,102 +272,100 @@ Pour remédier à ces confusions, nous avons mis en place une table de correspon
 
 #### Validation empirique : Comparaison des matrices de confusion
 
-Pour attester rigoureusement de la pertinence de ce regroupement, deux modèles identiques ont été entraînés et évalués sur la totalité de leurs classes respectives *(les représentations graphiques haute résolution des deux matrices sont détaillées en Annexe A)* :
+Pour attester rigoureusement de la pertinence de ce regroupement, deux modèles identiques ont été entraînés et évalués sur la totalité de leurs classes respectives *(les versions grand format haute résolution sont également présentées en Annexe A)* :
 
-1. **Modèle Canonique (21 classes)** — [Figure haute résolution](./confusion_matrix_canonique.png) :
+1. **Modèle Canonique (21 classes)** :
    - **Micro Top-1 : 81,20%** sur 3 313 images de validation.
    - La diagonale principale est très fortement marquée : *Street Art & Art Public* culmine à **96%**, *Réalisme Social* à **100%**, *Art Japonais* à **90%**, *Expressionnisme* à **91%**, *Impressionnisme* à **84%**.
    - Les quelques confusions résiduelles sont **historiquement et artistiquement fondées** : par exemple, le *Maniérisme* est confondu à 40% avec la *Renaissance* (dont il constitue l'évolution stylistique directe), et le *Rococo* est classé à 15% en *Baroque*.
-2. **Modèle Non Canonique (117 classes brutes)** — [Figure haute résolution](./confusion_matrix_non_canonique.png) :
+
+![Matrice de confusion normalisée — Données canoniques (21 classes)](./confusion_matrix_canonique.png)
+
+2. **Modèle Non Canonique (117 classes brutes)** :
    - **Micro Top-1 : 65,67%** sur 4 087 images de validation (chute de **-15,5%**).
    - La matrice présente une forte dispersion hors diagonale avec des bandes verticales prononcées : les sous-classes locales sont systématiquement attirées par les classes mères surreprésentées (*Baroque*, *Renaissance*).
 
-Cette analyse comparative démontre que le groupement des mouvements est indispensable pour obtenir des frontières de décision fiables et exploitables en aval par le serveur MCP.
+![Matrice de confusion normalisée — Données brutes (117 classes)](./confusion_matrix_non_canonique.png)
+
+Le groupement des mouvements est indispensable pour obtenir des frontières de décision fiables et exploitables en aval par le serveur MCP.
 
 ### 3.4 Comparaison entre les Architectures de Modèles
 
-Pour déterminer le modèle le plus apte à classifier les œuvres d'art et à générer des vecteurs d'encastrement pertinents pour le serveur MCP, une campagne d'expérimentation comparative systématique a été menée (consignée sur la branche `feat/measures` et les historiques `measures_summary.json` et `measures_history.json`). 
+Trois familles de modèles ont été entraînées et comparées empiriquement :
 
-Trois architectures distinctes ont été implémentées, entraînées et évaluées selon un protocole rigoureux :
-1. **`CustomArtCNN`** : Réseau convolutif conçu sur mesure et entraîné à partir de zéro (*from scratch*). Il est composé de 4 blocs convolutifs successifs (`Conv2d` $\to$ `BatchNorm2d` $\to$ `ReLU` $\to$ `MaxPool2d`), avec augmentation progressive des canaux ($32 \to 64 \to 128 \to 256$), suivi d'un aplatissement adaptatif et de deux couches denses de classification (**4 963 669 paramètres**).
-2. **`ArtClassifier` (ResNet-50)** : Architecture résiduelle classique pré-entraînée sur ImageNet-1K. La couche finale est remplacée par une projection vers un espace latent compact de 512 dimensions, suivi d'une couche de normalisation, d'une activation non-linéaire, d'un dropout régularisateur ($p=0,4$) et d'un classifieur linéaire (**24 568 917 paramètres**).
-3. **`ArtClassifierTinyBased` (ConvNeXt-Tiny)** : Architecture moderne à convolutions en profondeur (*depthwise* $7 \times 7$), intégrant les avancées architecturales des Vision Transformers (patchification, normalisation par couche `LayerNorm`, activations `GELU`), pré-entraînée sur ImageNet-1K et dotée de notre tête latente spécialisée 512D (**28 225 653 paramètres**).
+1. **`CustomArtCNN`** : Réseau convolutionnel 4 blocs conçu sur mesure, entraîné *from scratch* (**4,96 M paramètres**).
+2. **`ArtClassifier` (ResNet-50)** : Backbone résiduel pré-entraîné sur ImageNet-1K avec projection latente 512D (**24,57 M paramètres**).
+3. **`ArtClassifierTinyBased` (ConvNeXt-Tiny)** : Architecture moderne à convolutions en profondeur ($7 \times 7$ *depthwise*) pré-entraînée sur ImageNet-1K avec tête latente 512D (**28,23 M paramètres**).
 
-#### 3.4.1 Synthèse Comparative des Métriques Expérimentales
+#### 3.4.1 Performances Globales & Taxonomiques
 
-Le protocole a croisé l'impact du découpage taxonomique (**Canonique 21 classes** vs **Simple 117 classes**), de la durée d'entraînement (**10** vs **20 époques**) et de la régulation par arrêt précoce (**Early Stopping** avec patience de 2 époques sur la perte de validation).
+Les performances comparatives sur le cycle de 20 époques sont synthétisées dans le **Tableau 3** :
 
-Le tableau suivant récapitule les performances optimales moyennes atteintes par chaque architecture (avec écart-type $\pm \sigma$ calculé sur les lancements indépendants) ainsi que leur débit d'inférence mesuré sur GPU :
+Table: Tableau 3. Comparaison des performances de classification (cycle de 20 époques)
 
 | Modèle | Architecture | Params | Débit GPU | Micro (Can.) | Macro (Can.) | Top-5 (Can.) | Perte min | Micro (Simple) | Macro (Simple) |
 | :--------------------------- | :----------------------------- | :----: | :--------: | :------------------: | :------------------: | :-----------------: | :------: | :-----------------: | :-----------------: |
-| **`CustomArtCNN`** | CNN 4 blocs (*scratch*) | 4,96 M | 103,6 img/s | 67,46% | 20,78% | 87,99% | 1,1836 | 58,58% | 5,06% |
-| **`ArtClassifier`** | ResNet-50 pré-entraîné | 24,57 M | **168,1 img/s** | 82,03% $\pm$ 0,36% | 55,54% $\pm$ 0,09% | 96,06% $\pm$ 0,06% | 0,6531 | 66,00% $\pm$ 0,67% | 11,98% $\pm$ 0,01% |
-| **`TinyBased`** | **ConvNeXt-Tiny (Retenu)** | **28,23 M** | 121,1 img/s | **83,26% $\pm$ 0,19%** | **58,04% $\pm$ 1,26%** | **96,17% $\pm$ 0,00%** | **0,6211** | **67,54% $\pm$ 0,09%** | **11,82% $\pm$ 0,76%** |
+| **`CustomArtCNN`** | CNN 4 blocs (*scratch*) | 4,96 M | 101,5 img/s | 67,46% | 20,78% | 87,99% | 1,1836 | 58,58% | 5,06% |
+| **`ArtClassifier`** | ResNet-50 pré-entraîné | 24,57 M | **160,3 img/s** | 82,03% $\pm$ 0,36% | 55,54% $\pm$ 0,09% | 96,06% $\pm$ 0,06% | 0,6531 | 66,00% $\pm$ 0,67% | 11,98% $\pm$ 0,01% |
+| **`TinyBased`** | **ConvNeXt-Tiny (Retenu)** | **28,23 M** | 119,3 img/s | **83,26% $\pm$ 0,19%** | **58,04% $\pm$ 1,26%** | **96,17% $\pm$ 0,00%** | **0,6211** | **67,54% $\pm$ 0,09%** | **11,82% $\pm$ 0,76%** |
 
-*(Note technique sur l'inférence : Mesurée sur GPU NVIDIA RTX avec batch=16 et résolution $288 \times 288$. Les scores présentés pour le dataset canonique correspondent au cycle libre de 20 époques permettant de capturer le pic de macro-précision).*
+*(Performances maximales observées sur 20 époques. Débit d'inférence mesuré sur GPU NVIDIA RTX 3050 Laptop).*
 
 ---
 
 #### 3.4.2 Visualisation Multi-Métrique : Canonique vs Simple
 
-La figure ci-dessous met en miroir le comportement des trois modèles sur les deux découpages taxonomiques :
-
 ![Comparaison des performances des modèles](./models_comparison_metrics.png)
 
-Deux enseignements fondamentaux se dégagent de cette confrontation :
-1. **L'abîme entre entraînement *from scratch* et transfert de connaissances** : Sur le dataset canonique, `CustomArtCNN` plafonne à 67,46% en Micro Top-1 et 20,78% en Macro Top-1. Même si son score Micro peut sembler honorable (porté par la surreprésentation du *Réalisme Social*), son score Macro révèle une incapacité à généraliser sur les styles artistiques minoritaires. Le transfert d'apprentissage (`ArtClassifier` et `ArtClassifierTinyBased`) débloque un bond spectaculaire de **+14,6 à +15,8 points en Micro Top-1** et de **+34,8 à +37,3 points en Macro Top-1**.
-2. **L'effondrement généralisé sur la taxonomie brute (Simple 117 classes)** : Sur 117 classes déséquilibrées, les trois modèles s'effondrent en Macro Top-1 : 5,06% pour le CNN *from scratch* et ~12% pour les modèles pré-entraînés. Cet écrasement prouve empiriquement que la granularité excessive et les doublons du jeu de données brut détruisent la capacité de discrimination du réseau, rendant la canonisation en 21 macro-mouvements absolument impérative.
+- **Apport décisif du transfert de connaissances** : Sur le jeu canonique, `CustomArtCNN` plafonne à 20,78% en Macro Top-1. Le pré-entraînement ImageNet débloque un gain de **+14,6 à +15,8 points en Micro** et **+34,8 à +37,3 points en Macro**, indispensable pour reconnaître les styles artistiques rares.
+- **Effondrement sur la taxonomie brute (117 classes)** : Sans regroupement, la précision macro s'effondre pour tous les modèles (~5% *scratch*, ~12% pré-entraînés). La fusion en 21 macro-classes est impérative pour éliminer les ambiguïtés stylistiques.
 
 ---
 
-#### 3.4.3 Analyse des Dynamiques d'Apprentissage et de Convergence
-
-Le suivi époque par époque consigné dans l'historique d'entraînement révèle des régimes de convergence radicalement différents entre architectures :
+#### 3.4.3 Dynamiques de Convergence & Arrêt Précoce
 
 ![Dynamique d'apprentissage sur 20 époques](./models_convergence_curves.png)
 
-L'examen détaillé des trois sous-figures met en lumière des comportements cruciaux :
-
-* **Dynamique de la perte de validation (a)** :
-  * Pour les modèles pré-entraînés (`ArtClassifier` et `ArtClassifierTinyBased`), la perte s'effondre très rapidement pour atteindre son minimum dès les époques 5 à 7 ($\text{Loss} \approx 0,62 - 0,65$). Au-delà, la perte remonte graduellement pour dépasser $1,0$ à l'époque 20. Ce phénomène ne traduit pas un déclin de précision, mais une **surconfiance** (*overconfidence*) du réseau : le modèle continue de bien prédire la majorité des toiles mais attribue des probabilités extrêmes à ses rares erreurs, ce que l'entropie croisée pénalise lourdement.
-  * À l'opposé, `CustomArtCNN` présente une courbe d'apprentissage lente et monotone : sa perte décroît pas à pas tout au long des 20 époques, atteignant son minimum seulement vers l'époque 15 ($1,1836$). Dix époques étaient manifestement insuffisantes pour lui permettre de converger.
-
-* **Évolution de l'exactitude Macro Top-1 (b)** :
-  * C'est sur la métrique Macro que la supériorité de **ConvNeXt-Tiny** éclate : alors que sa perte minimale est atteinte à l'époque 7 ($0,625$), son score Macro continue de grimper jusqu'à **58,93% à l'époque 13** (moyenne de $58,04\%$). 
-  * ConvNeXt-Tiny dépasse systématiquement ResNet-50 tout au long de la seconde moitié de l'entraînement, creusant un écart net de **+2,5% à +3,4%**.
-  * `CustomArtCNN` stagne en dessous de $21\%$, confirmant que ses représentations de bas niveau restent aveugles aux mouvements picturaux peu fréquents.
-
-* **Comportement de l'Arrêt Précoce (*Early Stopping*)** :
-  * L'analyse démontre qu'un arrêt précoce configuré avec une patience trop stricte (`patience = 2`) sur la perte de validation est contre-productif pour maximiser l'exactitude stylistique : il coupe l'entraînement dès la 6^e^ ou 7^e^ époque, empêchant le réseau d'atteindre son apogée en Macro Top-1 ($58,04\%$ contre $51,65\%$ avec arrêt prématuré).
-  * Ce constat nous a conduits à formuler la recommandation d'étendre la patience à 4 ou 5 époques, ou d'asservir l'arrêt précoce directement au score Macro Top-1 plutôt qu'à la perte d'entropie croisée.
+- **Surconfiance (Loss vs Précision)** : La perte de validation des modèles pré-entraînés atteint son minimum dès les époques 5 à 7 ($\approx 0,62$), puis remonte sous l'effet de probabilités excessives sur les erreurs résiduelles. En parallèle, la Macro Top-1 de ConvNeXt continue de progresser jusqu'à l'époque 13 (**58,93%**).
+- **Lenteur d'apprentissage *from scratch*** : `CustomArtCNN` converge très lentement, atteignant son minimum de perte à l'époque 15 ($1,18$), confirmant qu'un cycle court de 10 époques était insuffisant.
+- **Biais d'arrêt précoce** : Une patience trop faible (`patience = 2`) interrompt prématurément le fine-tuning (époques 6–7), amputant le gain macro final ($51,65\%$ vs $58,04\%$). Une patience plus tolérante (4–5 époques) est recommandée.
 
 ---
 
-#### 3.4.4 Analyse du Compromis Performance vs Vitesse d'Inférence
+#### 3.4.4 Benchmark de Vitesse sur GPU NVIDIA RTX 3050
 
-Le choix d'un modèle pour un serveur interactif en temps réel (MCP) repose sur un arbitrage subtil entre finesse de reconnaissance et réactivité d'exécution :
+Afin d'obtenir une comparaison matérielle homogène, un banc d'essai sur **1 époque complète** (13 299 images train, 3 313 images validation, batch de 16 en précision mixte FP16) a été exécuté directement sur notre machine cible (résultats résumés dans le **Tableau 4**) :
 
-![Compromis Performance vs Vitesse](./models_tradeoff.png)
+![Compromis Performance vs Vitesse d'Inférence](./models_tradeoff.png)
 
-1. **`ArtClassifier` (ResNet-50)** est le champion de la vélocité brute avec **168,1 images/seconde** ($95,2$ ms par batch de 16). Ses filtres convolutionnels $3 \times 3$ standards bénéficient d'une optimisation matérielle maximale via cuDNN sur les Tensor Cores de NVIDIA.
-2. **`ArtClassifierTinyBased` (ConvNeXt-Tiny)** atteint **121,1 images/seconde** ($132,1$ ms par batch de 16). Bien que légèrement plus lent de 28% en raison des filtres $7 \times 7$ et des normalisations `LayerNorm`, son débit demeure très largement au-dessus du seuil temps réel requis ($> 100$ img/s).
-3. **`CustomArtCNN`** se révèle inefficace sur les deux plans : non seulement il est limité en précision ($20,8\%$ Macro), mais sa vitesse d'inférence n'atteint que **103,6 images/seconde** ($154,5$ ms par batch). Cette contre-performance s'explique par l'absence d'optimisations de type *depthwise* et la présence de couches denses intermédiaires lourdes en calcul.
+Table: Tableau 4. Benchmark de vitesse sur NVIDIA GeForce RTX 3050 Laptop (1 époque, batch=16, 288x288)
+
+| Modèle | Architecture | Params | Entraînement | Débit Train | Inférence Val | Débit Inférence | Durée Totale | Pic VRAM |
+| :--------------------------- | :----------------------------- | :----: | :----------: | :---------: | :-----------: | :-------------: | :----------: | :------: |
+| **`CustomArtCNN`** | CNN 4 blocs (*scratch*) | 4,96 M | 228,0 s | 58,3 img/s | 32,6 s | 101,5 img/s | 4m 21s | 1 730 Mo |
+| **`ArtClassifier`** | ResNet-50 pré-entraîné | 24,57 M | **136,7 s** | **97,3 img/s** | **20,7 s** | **160,3 img/s** | **2m 37s** | **1 499 Mo** |
+| **`TinyBased`** | **ConvNeXt-Tiny (Retenu)** | **28,23 M** | 169,3 s | 78,5 img/s | 27,8 s | 119,3 img/s | 3m 17s | 1 991 Mo |
+
+- **ResNet-50** maximise le débit brut (160,3 img/s en inférence).
+- **ConvNeXt-Tiny** offre le meilleur équilibre : avec **119,3 img/s** en inférence ($132$ ms/lot) et une VRAM modérée (1 991 Mo).
+- **`CustomArtCNN`** s'avère inefficace sur tous les critères : plus lent à l'entraînement (58,3 img/s) et plafonné à 20,8% en macro-précision.
 
 ---
 
 #### 3.4.5 Justification du Choix d'`ArtClassifierTinyBased`
 
-Au terme de cette évaluation empirique complète, **`ArtClassifierTinyBased` (ConvNeXt-Tiny)** a été sélectionné comme modèle de référence définitif pour notre projet d'intelligence artificielle artistique :
-- **Perception stylistique supérieure** : Les noyaux larges $7 \times 7$ à convolution en profondeur confèrent à ConvNeXt un champ récepteur étendu, indispensable pour appréhender à la fois la touche fine du peintre (facture picturale locale) et la structure compositionnelle de l'œuvre (lignes de force, clair-obscur, perspective globale).
-- **Meilleure équité envers les mouvements minoritaires** : Avec **58,04% en Macro Top-1** (et des pointes à 58,93%), il surclasse ResNet-50 (+2,5 pts) et le CNN sur mesure (+37,3 pts), offrant des prédictions équilibrées même sur des courants représentés par moins d'une centaine de toiles.
-- **Espace latent 512D optimal pour le serveur MCP** : La compacité de sa représentation vectorielle intermédiaire permet d'effectuer des calculs de similarité cosinus en moins de 2 millisecondes sur notre index matriciel de galerie, tout en conservant une expressivité sémantique maximale.
+Le choix de **ConvNeXt-Tiny** repose sur deux arguments décisifs :
+
+1. **Équité sur les classes rares** : Atteint **58,04% en Macro Top-1** (+2,5 pts vs ResNet-50, +37,3 pts vs scratch).
+2. **Espace latent 512D compact** : Idéal pour l'indexation matricielle et la recherche par similarité cosinus au sein du serveur MCP.
 
 ---
 
 ### 3.5 Comparaison avec les Modèles Baselines
 
-Afin de mesurer la valeur ajoutée réelle de notre modèle spécialiste, nous le comparons à plusieurs niveaux de référence (baselines théoriques, statistiques et heuristiques) sur le dataset canonique de 16 612 images (21 classes) :
+Afin de mesurer la valeur ajoutée réelle de notre modèle spécialiste, nous le comparons à plusieurs niveaux de référence (baselines théoriques, statistiques et heuristiques) sur le dataset canonique de 16 612 images (21 classes), détaillés dans le **Tableau 5** :
+
+Table: Tableau 5. Comparaison du modèle spécialiste avec les différents niveaux de baselines (21 classes)
 
 | Type de Baseline | Méthode / Modèle | Micro Top-1 | Macro Top-1 | Top-5 | Commentaire méthodologique |
 | :----------------------- | :--------------------------------------------------- | :---------: | :---------: | :-------: | :-------------------------------------------------------------------------------------------------- |
@@ -366,7 +378,8 @@ Afin de mesurer la valeur ajoutée réelle de notre modèle spécialiste, nous l
 
 #### Importance de la distinction Micro Top-1 vs Macro Top-1
 
-Le tableau ci-dessus met en lumière un enjeu fondamental de notre projet : le **déséquilibre de distribution des données**. 
+Le **Tableau 5** met en lumière un enjeu fondamental de notre projet : le **déséquilibre de distribution des données**. 
+
 - La baseline de la classe majoritaire montre qu'un prédicteur trivial prédisant systématiquement *Réalisme Social* obtiendrait un score Micro Top-1 trompeur de **48,35%**, tout en ayant une exactitude de 0% sur les 20 autres mouvements artistiques (d'où son Macro Top-1 de $4,76\%$).
 - Notre modèle atteint **81,59% en Micro Top-1** et **50,18% en Macro Top-1**, ce qui confirme qu'il parvient à discriminer efficacement des mouvements minoritaires (ex. *Surréalisme* avec 59 images ou *Cubisme* avec 61 images).
 
@@ -374,7 +387,9 @@ Le tableau ci-dessus met en lumière un enjeu fondamental de notre projet : le *
 
 ### 3.6 Validation Croisée Stratifiée (3 Plis)
 
-Pour évaluer la reproductibilité de l'entraînement et vérifier que les performances ne résultent pas d'un découpage chanceux des données, une validation croisée stratifiée à 3 plis ($K=3$) a été menée sur l'intégralité des 16 612 images :
+Pour évaluer la reproductibilité de l'entraînement et vérifier que les performances ne résultent pas d'un découpage chanceux des données, une validation croisée stratifiée à 3 plis ($K=3$) a été menée sur l'intégralité des 16 612 images (**Tableau 6**) :
+
+Table: Tableau 6. Résultats de la validation croisée stratifiée à 3 plis
 
 | Pli | Taille Entraînement | Taille Validation | Micro Top-1 (Max) | Macro Top-1 (Max) | Top-5 (Max) | Meilleure Loss | Époque d'arrêt |
 | :---------: | :-----------------: | :---------------: | :----------------: | :----------------: | :---------: | :------------: | :------------: |
@@ -384,6 +399,7 @@ Pour évaluer la reproductibilité de l'entraînement et vérifier que les perfo
 | **Moyenne $\pm \sigma$** | — | — | **80,44% $\pm$ 0,46%** | **46,40% $\pm$ 1,60%** | **95,42% $\pm$ 0,07%** | **0,7025 $\pm$ 0,0256** | **6,33 $\pm$ 1,15** |
 
 #### Enseignements de la validation croisée
+
 1. **Remarquable stabilité** : L'écart-type de la précision globale est inférieur à un demi-pourcent ($\sigma = 0,46\%$), et celui du Top-5 est quasiment nul ($\sigma = 0,07\%$). Cette régularité prouve la robustesse du modèle face aux variations d'échantillonnage.
 2. **Efficacité de l'Early Stopping** : Sur tous les plis, la convergence s'opère entre la 5^e^ et la 7^e^ époque. L'interruption anticipée protège efficacement le réseau contre le surapprentissage sur les classes denses.
 
@@ -391,7 +407,9 @@ Pour évaluer la reproductibilité de l'entraînement et vérifier que les perfo
 
 ### 3.7 Tests par Ablation
 
-Une étude d'ablation systématique a été exécutée afin de quantifier l'apport individuel de chaque choix d'architecture dans `ArtClassifierTinyBased` :
+Une étude d'ablation systématique a été exécutée afin de quantifier l'apport individuel de chaque choix d'architecture dans `ArtClassifierTinyBased` (**Tableau 7**) :
+
+Table: Tableau 7. Étude d'ablation des composants de l'architecture ConvNeXt-Tiny
 
 | Configuration | Description | Paramètres entraînés | Micro Top-1 (Max) | Macro Top-1 (Max) | Top-5 (Max) | Meilleure Loss | Époque d'arrêt | Durée |
 | :----------------------- | :----------------------------------------------------------------- | :------------------: | :----------------: | :----------------: | :---------: | :------------: | :------------: | :-------: |
@@ -401,7 +419,8 @@ Une étude d'ablation systématique a été exécutée afin de quantifier l'appo
 | **`no_latent_space`** | Classification directe sans goulot ($768 \to 21$) | 27 836 277 | **82,16%** | 50,06% | 96,05% | 0,6153 | 5 (Early stop) | 15m 50s |
 | **`frozen_backbone`** | Fine-tuning désactivé (Backbone ConvNeXt gelé) | 405 525 | 79,60% | 44,73% | 94,69% | 0,8059 | 10 | 16m 26s |
 
-#### Analyse des résultats d'ablation :
+#### Analyse des résultats d'ablation
+
 - **Fine-tuning du backbone (`frozen_backbone` vs `baseline`)** : Geler le backbone réduit les paramètres entraînables de 98,6% et assure une performance respectable (79,60%). Cependant, le dégel des couches convolutionnelles apporte un gain net de **+2,0% en Top-1**, **+5,45% en Macro Top-1** et abaisse la loss de 0,8059 à 0,6323.
 - **Espace latent intermédiaire (`no_latent_space`)** : La projection directe $768 \to 21$ obtient un score légèrement supérieur en classification pure (82,16%). La conservation du goulot d'étranglement 512D (`baseline`) est indispensable pour notre projet afin d'assurer l'indexation compacte et la recherche par similarité cosinus via MCP.
 - **Rôle du Dropout et de la Normalisation** : L'ablation du dropout améliore ponctuellement le Macro Top-1 (52,13%) mais induit une remontée rapide de la perte de validation dès la 6^e^ époque. L'ablation de la BatchNorm accélère la convergence (5 époques).
@@ -413,57 +432,100 @@ Une étude d'ablation systématique a été exécutée afin de quantifier l'appo
 Au cours de la réalisation de ce projet, plusieurs défis techniques majeurs ont dû être surmontés :
 
 ### 1. Contraintes strictes de mémoire GPU (VRAM de 4 Go)
-L'entraînement de réseaux modernes sur des images haute résolution requiert d'importantes ressources mémoire. Sur notre carte NVIDIA RTX 3050 (4 Go de VRAM dédiée), les premiers essais avec un batch size standard de 32 ou des résolutions de $384 \times 384$ ont immédiatement provoqué des erreurs critiques `CUDA Out of Memory`.
-- **Solutions apportées** :
-  1. Fixation du batch size à $16$, calibré pour occuper ~3,4 Go de VRAM.
-  2. Activation systématique de la précision mixte avec `torch.autocast(device_type='cuda', dtype=torch.float16)` et mise à l'échelle des gradients via `torch.GradScaler()`.
-  3. Libération explicite des tenseurs et invocation de `torch.cuda.empty_cache()` et `gc.collect()` entre chaque pli de validation croisée et chaque exécution d'ablation.
 
-### 2. Bruit taxonomique et incohérences du dataset ART500K
+L'entraînement de réseaux modernes sur des images haute résolution requiert d'importantes ressources mémoire. Sur notre carte NVIDIA RTX 3050 (4 Go de VRAM dédiée), les premiers essais avec un batch size standard de 32 ou des résolutions de $384 \times 384$ ont immédiatement provoqué des erreurs critiques `CUDA Out of Memory`.
+
+**Solutions apportées** :
+
+1. Fixation du batch size à $16$, calibré pour occuper ~3,4 Go de VRAM.
+2. Activation systématique de la précision mixte avec `torch.autocast(device_type='cuda', dtype=torch.float16)` et mise à l'échelle des gradients via `torch.GradScaler()`.
+3. Libération explicite des tenseurs et invocation de `torch.cuda.empty_cache()` et `gc.collect()` entre chaque pli de validation croisée et chaque exécution d'ablation.
+
+### 2. Bruit et incohérences du dataset ART500K
+
 Le dataset brut comporte des libellés multiples, des doublons historiques et des dénominations ambiguës (*Ashcan School*, *Barbizon school*, *Modernism*). Certaines œuvres étaient associées à plusieurs dossiers simultanément.
-- **Solutions apportées** :
-  1. Conception de `src/loader.py` avec une résolution stricte de priorité excluant les dénominations trop génériques (*Art Moderne*, *Réalisme Social*) lorsqu'une étiquette plus spécifique existe.
-  2. Validation de la démarche par la comparaison systématique des matrices de confusion canonique et non-canonique.
+
+**Solutions apportées** :
+
+1. Conception de `src/loader.py` avec une résolution stricte de priorité excluant les dénominations trop génériques (*Art Moderne*, *Réalisme Social*) lorsqu'une étiquette plus spécifique existe.
+2. Validation de la démarche par la comparaison systématique des matrices de confusion canonique et non-canonique.
 
 ### 3. Volume de données et compromis sur les sous-ensembles
-ART500K représente plus de 56 Go et ~500 000 œuvres. Le dossier `Artists1` manquait presque totalement d'étiquetage de mouvements artistiques, tandis qu'`Artists2` introduisait un déséquilibre massif d'artistes majeurs au détriment des courants picturaux minoritaires.
-- **Solution apportée** : Focalisation ciblée sur le dossier `Art Movement` (16 612 œuvres vérifiées), permettant de maîtriser les temps d'expérimentation (campagnes d'ablation complètes en ~1h30 au lieu de dizaines d'heures) tout en conservant une diversité stylistique équilibrée. L'intégration progressive d'Artists2 est formalisée pour la version V2.
 
-### 4. Déploiement du protocole MCP et gestion des flux asynchrones
-L'interfaçage du modèle de vision avec le serveur MCP a nécessité la gestion d'entrées hétérogènes (fichiers locaux, URLs Web distantes, identifiants d'œuvres).
-- **Solutions apportées** : Création d'un module d'assistance (`src/serv_mcp/utils.py`) avec téléchargement et mise en cache MD5 des images Web, validation de format avec Pillow, et pré-calcul d'un index matriciel (`gallery_index.pt`) pour garantir un temps de réponse instantané lors des appels d'outils par le LLM.
+ART500K représente plus de 56 Go et ~500 000 œuvres. Le dossier `Artists1` manquait presque totalement d'étiquetage de mouvements artistiques, tandis qu'`Artists2` introduisait un déséquilibre massif d'artistes majeurs au détriment des courants picturaux minoritaires.
+
+**Solution apportée** : Focalisation ciblée sur le dossier `Art Movement` (16 612 œuvres vérifiées), permettant de maîtriser les temps d'expérimentation (campagnes d'ablation complètes en ~1h30 au lieu de dizaines d'heures) tout en conservant une diversité stylistique équilibrée. L'intégration progressive d'Artists2 est formalisée pour la version V2.
 
 ---
 
 # IV. Conclusion & Perspectives
 
 ### Compétences acquises
-Ce projet nous a permis de franchir un cap significatif en Deep Learning appliqué à la vision et aux architectures agentiques :
-1. **Maîtrise du Transfer Learning & Fine-tuning** : Adaptation réussie d'un réseau convolutif de pointe (`ConvNeXt-Tiny`) aux spécificités plastiques et textuelles des œuvres d'art.
-2. **Rigueur méthodologique et expérimentale** : Implémentation d'une suite complète de validation croisée stratifiée, d'études d'ablation quantifiées et de matrices de confusion normalisées.
-3. **Architecture Agentique & Protocole MCP** : Conception d'un pont fonctionnel entre l'intelligence conversationnelle des LLM et la précision d'un modèle spécialiste de vision par ordinateur.
 
-### Limites actuelles : Analyse du partitionnement des données
-Une analyse critique de notre implémentation actuelle (`src/loader.py`) révèle que le jeu de données est partitionné en **deux ensembles** : **Train (80%)** et **Validation (20%)**.
-- Bien que la validation croisée stratifiée à 3 plis apporte une garantie de reproductibilité, les métriques finales et les matrices de confusion ont été évaluées sur l'ensemble de validation qui a également guidé l'Early Stopping.
-- **Recommandation pour la version de production** : Il convient d'introduire un découpage strict à **trois volets indépendants** : **Entraînement (70%)**, **Validation (15%)** (dédié exclusivement au calcul de la loss et à l'arrêt anticipé), et **Test (15%)** (isolé hermétiquement, évalué une seule fois à la fin).
+Ce projet nous a permis de gagner différentes compétences :
+
+1. **Maîtrise du Transfer Learning & Fine-tuning** : Adaptation réussie d'un réseau convolutif de pointe (`ConvNeXt-Tiny`) aux spécificités des œuvres d'art.
+2. **Rigueur méthodologique et expérimentale** : Implémentation d'une suite complète de validation croisée stratifiée, d'études d'ablation quantifiées et de matrices de confusion normalisées.
+3. **Architecture Agentique & Protocole MCP** : Conception d'un serveur MCP + interface avec notre modèle.
 
 ### Pistes d'amélioration futures (Version 2)
+
 1. **Intégration d'Artists2** : Intégrer les œuvres issues d'Artists2 après rééquilibrage par échantillonnage stratifié ou pondération de loss (*Class-Balanced Focal Loss*) pour enrichir les représentations d'artistes emblématiques.
-2. **Apprentissage métrique / Contrastive Learning** : Entraîner l'espace latent 512D avec une perte de triplet (*Triplet Margin Loss*) ou une perte Supervised Contrastive (SupCon). Cela permettrait de rapprocher explicitement les œuvres d'un même mouvement et d'éloigner les styles divergents, décuplant l'efficacité de l'outil MCP `find_similar_artworks`.
 
 \clearpage
+\onecolumn
 
 # V. Annexes
 
-## Annexe A : Visualisation comparative des matrices de confusion
+## Annexe A : Visualisation grand format des matrices de confusion
 
-| Matrice Canonique (21 classes) | Matrice Non Canonique (117 classes) |
-| :-----------------------------------------------------------------: | :-----------------------------------------------------------------: |
-| [![Matrice Canonique](./confusion_matrix_canonique.png)](./confusion_matrix_canonique.png) | [![Matrice Non Canonique](./confusion_matrix_non_canonique.png)](./confusion_matrix_non_canonique.png) |
-| **Micro Top-1 : 81,20%** — Structure diagonale nette | **Micro Top-1 : 65,67%** — Forte dispersion hors-diagonale |
+Afin d'examiner en détail les taux de rappel et les confusions inter-classes, les matrices de confusion normalisées sont reproduites ci-dessous en grand format pleine page :
 
-## Annexe B : Configuration client pour le serveur MCP
+### A.1 Matrice de confusion canonique (21 classes)
+
+*Performances : Micro Top-1 de **81,20%** sur 3 313 images de validation. Diagonale fortement dominante, avec confusions résiduelles historiquement justifiées (Maniérisme vers Renaissance).*
+
+![Matrice de confusion normalisée — Données canoniques (21 classes)](./confusion_matrix_canonique.png){width=92%}
+
+\clearpage
+
+### A.2 Matrice de confusion non canonique (117 classes brutes)
+
+*Performances : Micro Top-1 de **65,67%** sur 4 087 images de validation (-15,5 points). Dispersion marquée hors diagonale avec colonnes d'attraction sur les classes mères surreprésentées (Baroque, Renaissance).*
+
+![Matrice de confusion normalisée — Données brutes non canoniques (117 classes)](./confusion_matrix_non_canonique.png){width=92%}
+
+\clearpage
+
+## Annexe B : Visualisations détaillées des performances et dynamiques d'entraînement
+
+Afin d'offrir une lisibilité maximale sur les axes, légendes et courbes d'entraînement, les figures comparatives de la section 3.4 sont reproduites ci-dessous en grand format :
+
+### B.1 Comparaison multi-métrique : Données canoniques vs Données simples
+
+*Comparaison systématique des métriques Micro Top-1, Macro Top-1 et Top-5 sur les 3 architectures (CustomArtCNN, ArtClassifier ResNet-50, ArtClassifierTinyBased ConvNeXt-Tiny).*
+
+![Comparaison multi-métrique des modèles (Canonique vs Simple)](./models_comparison_metrics.png){width=98%}
+
+\vspace{1em}
+
+### B.2 Dynamiques de convergence sur 20 époques (Loss, Macro Top-1, Micro Top-1)
+
+*Évolution par époque de la perte d'entraînement/validation et des exactitudes. Mise en évidence du point d'inflexion optimal (époques 5 à 7 pour la loss, époque 13 pour la Macro Top-1).*
+
+![Dynamique d'apprentissage sur 20 époques (Validation Loss, Macro Top-1 et Micro Top-1)](./models_convergence_curves.png){width=98%}
+
+\clearpage
+
+### B.3 Compromis Performance vs Vitesse d'Inférence (NVIDIA RTX 3050 Laptop)
+
+*Compromis Pareto débit d'inférence (img/s) vs Macro Top-1 (%). Le diamètre des bulles est proportionnel au nombre de paramètres du modèle (4,96 M à 28,23 M).*
+
+![Compromis Performance vs Vitesse d'Inférence sur GPU NVIDIA RTX 3050 Laptop](./models_tradeoff.png){width=80%}
+
+\vspace{1.5em}
+
+## Annexe C : Configuration client pour le serveur MCP
 
 Pour activer le serveur dans Claude Desktop, Cursor ou un client compatible, insérer la configuration suivante dans le fichier `mcpServers` :
 
