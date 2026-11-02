@@ -1,4 +1,4 @@
-# Rapport d'analyse expérimentale : Classification de mouvements artistiques
+# Rapport d'analyse expérimentale : Classification de mouvements artistiques 
 
 Ce document présente l'analyse des résultats obtenus lors de la campagne d'entraînements répertoriée dans les fichiers measures_summary.json et measures_history.json. L'objectif est d'étudier : 
 
