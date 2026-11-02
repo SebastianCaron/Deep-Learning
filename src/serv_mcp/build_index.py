@@ -23,7 +23,7 @@ def build_gallery_index(
     print(f"Using device: {device}", file=sys.stderr)
 
     # La data
-    train_ds, val_ds, classes, _ = load_canonical_data(data_dir=data_dir)
+    train_ds, val_ds, test_ds, classes, _ = load_canonical_data(data_dir=data_dir)
     print(f"Canonical classes ({len(classes)}): {classes}", file=sys.stderr)
     print(f"Gallery will index {len(val_ds)} validation artworks.", file=sys.stderr)
 

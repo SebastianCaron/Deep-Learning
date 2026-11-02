@@ -179,8 +179,14 @@ def get_eval_transfomrm(img_size = 288):
         v2.Normalize(mean=[0.485, 0.456, 0.406], std=[0.229, 0.224, 0.225]),
     ])
 
-def load_canonical_data(data_dir="./data/Art Movement/", train_ratio=0.8, seed=42, img_size=288):
-    
+def load_canonical_data(
+    data_dir="./data/Art Movement/",
+    train_ratio=0.8,
+    val_ratio=0.1,
+    test_ratio=0.1,
+    seed=42,
+    img_size=288,
+):
     data_dir = Path(data_dir)
 
     if not data_dir.exists():
@@ -209,37 +215,64 @@ def load_canonical_data(data_dir="./data/Art Movement/", train_ratio=0.8, seed=4
     classes = sorted(class_to_paths.keys())
     class_to_idx = {cls: idx for idx, cls in enumerate(classes)}
 
+    if test_ratio is None:
+        test_ratio = max(0.0, round(1.0 - train_ratio - val_ratio, 4))
+
     random.seed(seed)
     train_samples = []
     val_samples = []
+    test_samples = []
 
     for cls in classes:
-        paths = class_to_paths[cls]
+        paths = list(class_to_paths[cls])
         random.shuffle(paths)
 
-        n_val = max(1, int(len(paths) * (1 - train_ratio)))
+        n_total = len(paths)
         cls_idx = class_to_idx[cls]
 
-        val_paths = paths[:n_val]
-        train_paths = paths[n_val:]
+        if test_ratio > 0.0:
+            n_val = max(1, int(round(n_total * val_ratio)))
+            n_test = max(1, int(round(n_total * test_ratio)))
+            if n_val + n_test >= n_total:
+                n_val = max(1, n_total // 3)
+                n_test = max(1, n_total // 3)
+            val_paths = paths[:n_val]
+            test_paths = paths[n_val : n_val + n_test]
+            train_paths = paths[n_val + n_test :]
+        else:
+            n_val = max(1, int(round(n_total * val_ratio)))
+            if n_val >= n_total:
+                n_val = n_total - 1
+            val_paths = paths[:n_val]
+            test_paths = []
+            train_paths = paths[n_val:]
 
         for p in train_paths:
             train_samples.append((p, cls_idx))
         for p in val_paths:
             val_samples.append((p, cls_idx))
+        for p in test_paths:
+            test_samples.append((p, cls_idx))
 
     train_tf = get_training_transform(img_size=img_size)
     val_tf = get_eval_transfomrm(img_size=img_size)
 
     train_dataset = ArtDataset(train_samples, transform=train_tf, classes=classes)
     val_dataset = ArtDataset(val_samples, transform=val_tf, classes=classes)
+    test_dataset = ArtDataset(test_samples, transform=val_tf, classes=classes)
 
-    return train_dataset, val_dataset, classes, class_to_paths
+    return train_dataset, val_dataset, test_dataset, classes, class_to_paths
 
 
 
-def get_datasets(data_dir=None, train_ratio=0.8, seed=42, img_size=288):
-
+def get_datasets(
+    data_dir=None,
+    train_ratio=0.8,
+    val_ratio=0.1,
+    test_ratio=0.1,
+    seed=42,
+    img_size=288,
+):
     data_dir = Path(data_dir)
 
     if not data_dir.exists():
@@ -250,6 +283,9 @@ def get_datasets(data_dir=None, train_ratio=0.8, seed=42, img_size=288):
     base_dataset = datasets.ImageFolder(root=str(data_dir))
     classes = base_dataset.classes
 
+    if test_ratio is None:
+        test_ratio = max(0.0, round(1.0 - train_ratio - val_ratio, 4))
+
     random.seed(seed)
     class_to_indices = defaultdict(list)
     for idx, (_, target) in enumerate(base_dataset.samples):
@@ -257,23 +293,47 @@ def get_datasets(data_dir=None, train_ratio=0.8, seed=42, img_size=288):
 
     train_indices = []
     val_indices = []
+    test_indices = []
+
     for target, indices in class_to_indices.items():
+        indices = list(indices)
         random.shuffle(indices)
-        if len(indices) == 1:
-            train_indices.append(indices[0])
+        n_total = len(indices)
+
+        if test_ratio > 0.0:
+            if n_total == 1:
+                train_indices.append(indices[0])
+            elif n_total == 2:
+                train_indices.append(indices[0])
+                val_indices.append(indices[1])
+            else:
+                n_val = max(1, int(round(n_total * val_ratio)))
+                n_test = max(1, int(round(n_total * test_ratio)))
+                if n_val + n_test >= n_total:
+                    n_val = max(1, n_total // 3)
+                    n_test = max(1, n_total // 3)
+                val_indices.extend(indices[:n_val])
+                test_indices.extend(indices[n_val : n_val + n_test])
+                train_indices.extend(indices[n_val + n_test :])
         else:
-            n_val = max(1, int(len(indices) * (1 - train_ratio)))
-            if n_val >= len(indices):
-                n_val = len(indices) - 1
-            val_indices.extend(indices[:n_val])
-            train_indices.extend(indices[n_val:])
+            if n_total == 1:
+                train_indices.append(indices[0])
+            else:
+                n_val = max(1, int(round(n_total * val_ratio)))
+                if n_val >= n_total:
+                    n_val = n_total - 1
+                val_indices.extend(indices[:n_val])
+                train_indices.extend(indices[n_val:])
 
     train_tf = get_training_transform(img_size=img_size)
     val_tf = get_eval_transfomrm(img_size=img_size)
-    
+
     train_samples = [base_dataset.samples[i] for i in train_indices]
     val_samples = [base_dataset.samples[i] for i in val_indices]
+    test_samples = [base_dataset.samples[i] for i in test_indices]
+
     train_dataset = ArtDataset(train_samples, transform=train_tf, classes=classes)
     val_dataset = ArtDataset(val_samples, transform=val_tf, classes=classes)
+    test_dataset = ArtDataset(test_samples, transform=val_tf, classes=classes)
 
-    return train_dataset, val_dataset, classes
+    return train_dataset, val_dataset, test_dataset, classes
