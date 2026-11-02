@@ -4,6 +4,7 @@ data/*/*/*.jpg
 # Poids des modeles volumineux (a ne pas pousser sur GitHub)
 *.pth
 checkpoints/**/*.pth
+!checkpoints/best_model.pth
 
 __pycache__/
 *.pyc

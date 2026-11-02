@@ -12,14 +12,20 @@ Le pipeline s'appuie sur une taxonomie regroupant les styles en **21 mouvements 
 ## 1. Installation de l'environnement
 
 ### Prérequis
+- Git & Git LFS (`git lfs install`)
 - Python 3.10+ (testé avec Python 3.12 / 3.14)
 - Carte graphique NVIDIA recommandée avec pilotes CUDA à jour
 
+### Cloner le projet (avec Git LFS)
+```bash
+# Cloner le dépôt et récupérer les fichiers LFS (modèle et index)
+git clone <url_du_repo> project
+cd project
+git lfs pull
+```
+
 ### Création du venv
 ```bash
-# Cloner le dépôt et se placer dans le projet
-cd project
-
 # Créer et activer l'environnement virtuel
 python3 -m venv .venv
 source .venv/bin/activate
