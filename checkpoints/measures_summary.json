@@ -1,0 +1,722 @@
+{
+  "ArtClassifier/simple/10/none": {
+    "num_runs": 2,
+    "best_val_micro_top1": {
+      "mean": 66.1243,
+      "std": 0.3633
+    },
+    "best_val_macro_top1": {
+      "mean": 12.4085,
+      "std": 0.2595
+    },
+    "best_val_loss": {
+      "mean": 1.1263,
+      "std": 0.0262
+    },
+    "best_val_top5": {
+      "mean": 91.6809,
+      "std": 0.1038
+    },
+    "final_val_micro_top1": {
+      "mean": 64.7419,
+      "std": 0.4844
+    },
+    "final_val_macro_top1": {
+      "mean": 11.3986,
+      "std": 0.4154
+    },
+    "final_val_loss": {
+      "mean": 1.1725,
+      "std": 0.0179
+    },
+    "final_val_top5": {
+      "mean": 91.4974,
+      "std": 0.0519
+    },
+    "stopped_epoch": {
+      "mean": 10.0,
+      "std": 0.0
+    },
+    "config": {
+      "model": "ArtClassifier",
+      "dataloader": "simple",
+      "nb_epochs": 10,
+      "early_stop": null
+    }
+  },
+  "ArtClassifier/simple/10/2": {
+    "num_runs": 2,
+    "best_val_micro_top1": {
+      "mean": 65.6227,
+      "std": 0.1038
+    },
+    "best_val_macro_top1": {
+      "mean": 10.037,
+      "std": 0.403
+    },
+    "best_val_loss": {
+      "mean": 1.1398,
+      "std": 0.0153
+    },
+    "best_val_top5": {
+      "mean": 91.7666,
+      "std": 0.2595
+    },
+    "final_val_micro_top1": {
+      "mean": 64.9621,
+      "std": 0.346
+    },
+    "final_val_macro_top1": {
+      "mean": 10.037,
+      "std": 0.403
+    },
+    "final_val_loss": {
+      "mean": 1.1489,
+      "std": 0.021
+    },
+    "final_val_top5": {
+      "mean": 91.6442,
+      "std": 0.4325
+    },
+    "stopped_epoch": {
+      "mean": 7.5,
+      "std": 0.7071
+    },
+    "config": {
+      "model": "ArtClassifier",
+      "dataloader": "simple",
+      "nb_epochs": 10,
+      "early_stop": 2
+    }
+  },
+  "ArtClassifier/canonique/10/none": {
+    "num_runs": 2,
+    "best_val_micro_top1": {
+      "mean": 81.3009,
+      "std": 0.1494
+    },
+    "best_val_macro_top1": {
+      "mean": 52.4854,
+      "std": 0.1439
+    },
+    "best_val_loss": {
+      "mean": 0.6568,
+      "std": 0.019
+    },
+    "best_val_top5": {
+      "mean": 95.8648,
+      "std": 0.3842
+    },
+    "final_val_micro_top1": {
+      "mean": 80.9991,
+      "std": 0.5763
+    },
+    "final_val_macro_top1": {
+      "mean": 51.6561,
+      "std": 1.0288
+    },
+    "final_val_loss": {
+      "mean": 0.7864,
+      "std": 0.106
+    },
+    "final_val_top5": {
+      "mean": 95.5629,
+      "std": 0.811
+    },
+    "stopped_epoch": {
+      "mean": 10.0,
+      "std": 0.0
+    },
+    "config": {
+      "model": "ArtClassifier",
+      "dataloader": "canonique",
+      "nb_epochs": 10,
+      "early_stop": null
+    }
+  },
+  "ArtClassifier/canonique/10/2": {
+    "num_runs": 2,
+    "best_val_micro_top1": {
+      "mean": 81.3764,
+      "std": 0.4696
+    },
+    "best_val_macro_top1": {
+      "mean": 52.1928,
+      "std": 1.4853
+    },
+    "best_val_loss": {
+      "mean": 0.6287,
+      "std": 0.0242
+    },
+    "best_val_top5": {
+      "mean": 96.0459,
+      "std": 0.2561
+    },
+    "final_val_micro_top1": {
+      "mean": 81.2858,
+      "std": 0.5976
+    },
+    "final_val_macro_top1": {
+      "mean": 51.5684,
+      "std": 0.6022
+    },
+    "final_val_loss": {
+      "mean": 0.6535,
+      "std": 0.0265
+    },
+    "final_val_top5": {
+      "mean": 96.0459,
+      "std": 0.2561
+    },
+    "stopped_epoch": {
+      "mean": 7.5,
+      "std": 0.7071
+    },
+    "config": {
+      "model": "ArtClassifier",
+      "dataloader": "canonique",
+      "nb_epochs": 10,
+      "early_stop": 2
+    }
+  },
+  "ArtClassifier/simple/20/none": {
+    "num_runs": 2,
+    "best_val_micro_top1": {
+      "mean": 66.002,
+      "std": 0.6748
+    },
+    "best_val_macro_top1": {
+      "mean": 11.9827,
+      "std": 0.0118
+    },
+    "best_val_loss": {
+      "mean": 1.1169,
+      "std": 0.0274
+    },
+    "best_val_top5": {
+      "mean": 92.5495,
+      "std": 0.0173
+    },
+    "final_val_micro_top1": {
+      "mean": 62.5887,
+      "std": 0.5882
+    },
+    "final_val_macro_top1": {
+      "mean": 9.9988,
+      "std": 0.1744
+    },
+    "final_val_loss": {
+      "mean": 1.3459,
+      "std": 0.0927
+    },
+    "final_val_top5": {
+      "mean": 91.9746,
+      "std": 0.4844
+    },
+    "stopped_epoch": {
+      "mean": 20.0,
+      "std": 0.0
+    },
+    "config": {
+      "model": "ArtClassifier",
+      "dataloader": "simple",
+      "nb_epochs": 20,
+      "early_stop": null
+    }
+  },
+  "ArtClassifier/simple/20/2": {
+    "num_runs": 2,
+    "best_val_micro_top1": {
+      "mean": 65.586,
+      "std": 0.2249
+    },
+    "best_val_macro_top1": {
+      "mean": 10.3183,
+      "std": 1.1412
+    },
+    "best_val_loss": {
+      "mean": 1.1514,
+      "std": 0.0076
+    },
+    "best_val_top5": {
+      "mean": 91.6442,
+      "std": 0.4671
+    },
+    "final_val_micro_top1": {
+      "mean": 64.7174,
+      "std": 1.4533
+    },
+    "final_val_macro_top1": {
+      "mean": 10.2711,
+      "std": 1.1443
+    },
+    "final_val_loss": {
+      "mean": 1.1687,
+      "std": 0.0084
+    },
+    "final_val_top5": {
+      "mean": 91.6075,
+      "std": 0.519
+    },
+    "stopped_epoch": {
+      "mean": 7.0,
+      "std": 0.0
+    },
+    "config": {
+      "model": "ArtClassifier",
+      "dataloader": "simple",
+      "nb_epochs": 20,
+      "early_stop": 2
+    }
+  },
+  "ArtClassifier/canonique/20/none": {
+    "num_runs": 2,
+    "best_val_micro_top1": {
+      "mean": 82.0254,
+      "std": 0.3628
+    },
+    "best_val_macro_top1": {
+      "mean": 55.5356,
+      "std": 0.0874
+    },
+    "best_val_loss": {
+      "mean": 0.6531,
+      "std": 0.0158
+    },
+    "best_val_top5": {
+      "mean": 96.061,
+      "std": 0.064
+    },
+    "final_val_micro_top1": {
+      "mean": 81.3613,
+      "std": 0.4055
+    },
+    "final_val_macro_top1": {
+      "mean": 53.2044,
+      "std": 1.0571
+    },
+    "final_val_loss": {
+      "mean": 0.9958,
+      "std": 0.0373
+    },
+    "final_val_top5": {
+      "mean": 95.1102,
+      "std": 0.2134
+    },
+    "stopped_epoch": {
+      "mean": 20.0,
+      "std": 0.0
+    },
+    "config": {
+      "model": "ArtClassifier",
+      "dataloader": "canonique",
+      "nb_epochs": 20,
+      "early_stop": null
+    }
+  },
+  "ArtClassifier/canonique/20/2": {
+    "num_runs": 2,
+    "best_val_micro_top1": {
+      "mean": 79.2182,
+      "std": 1.7715
+    },
+    "best_val_macro_top1": {
+      "mean": 44.2351,
+      "std": 8.3228
+    },
+    "best_val_loss": {
+      "mean": 0.7899,
+      "std": 0.1936
+    },
+    "best_val_top5": {
+      "mean": 94.9291,
+      "std": 1.6221
+    },
+    "final_val_micro_top1": {
+      "mean": 78.7051,
+      "std": 2.4972
+    },
+    "final_val_macro_top1": {
+      "mean": 43.9858,
+      "std": 8.6755
+    },
+    "final_val_loss": {
+      "mean": 1.704,
+      "std": 1.3902
+    },
+    "final_val_top5": {
+      "mean": 94.1594,
+      "std": 1.9422
+    },
+    "stopped_epoch": {
+      "mean": 5.5,
+      "std": 3.5355
+    },
+    "config": {
+      "model": "ArtClassifier",
+      "dataloader": "canonique",
+      "nb_epochs": 20,
+      "early_stop": 2
+    }
+  },
+  "ArtClassifierTinyBased/simple/10/none": {
+    "num_runs": 2,
+    "best_val_micro_top1": {
+      "mean": 67.5434,
+      "std": 0.0865
+    },
+    "best_val_macro_top1": {
+      "mean": 11.7455,
+      "std": 0.1358
+    },
+    "best_val_loss": {
+      "mean": 1.0731,
+      "std": 0.0232
+    },
+    "best_val_top5": {
+      "mean": 92.941,
+      "std": 0.1211
+    },
+    "final_val_micro_top1": {
+      "mean": 64.8887,
+      "std": 0.4498
+    },
+    "final_val_macro_top1": {
+      "mean": 11.0151,
+      "std": 1.1687
+    },
+    "final_val_loss": {
+      "mean": 1.1388,
+      "std": 0.0316
+    },
+    "final_val_top5": {
+      "mean": 92.941,
+      "std": 0.1211
+    },
+    "stopped_epoch": {
+      "mean": 10.0,
+      "std": 0.0
+    },
+    "config": {
+      "model": "ArtClassifierTinyBased",
+      "dataloader": "simple",
+      "nb_epochs": 10,
+      "early_stop": null
+    }
+  },
+  "ArtClassifierTinyBased/simple/10/2": {
+    "num_runs": 2,
+    "best_val_micro_top1": {
+      "mean": 66.7972,
+      "std": 0.519
+    },
+    "best_val_macro_top1": {
+      "mean": 10.628,
+      "std": 0.2051
+    },
+    "best_val_loss": {
+      "mean": 1.0867,
+      "std": 0.0206
+    },
+    "best_val_top5": {
+      "mean": 91.5831,
+      "std": 0.1384
+    },
+    "final_val_micro_top1": {
+      "mean": 65.0966,
+      "std": 0.7094
+    },
+    "final_val_macro_top1": {
+      "mean": 9.7891,
+      "std": 0.5409
+    },
+    "final_val_loss": {
+      "mean": 1.151,
+      "std": 0.0528
+    },
+    "final_val_top5": {
+      "mean": 90.849,
+      "std": 1.1765
+    },
+    "stopped_epoch": {
+      "mean": 6.5,
+      "std": 0.7071
+    },
+    "config": {
+      "model": "ArtClassifierTinyBased",
+      "dataloader": "simple",
+      "nb_epochs": 10,
+      "early_stop": 2
+    }
+  },
+  "ArtClassifierTinyBased/canonique/10/none": {
+    "num_runs": 2,
+    "best_val_micro_top1": {
+      "mean": 82.3725,
+      "std": 0.8537
+    },
+    "best_val_macro_top1": {
+      "mean": 54.0329,
+      "std": 1.867
+    },
+    "best_val_loss": {
+      "mean": 0.6233,
+      "std": 0.0154
+    },
+    "best_val_top5": {
+      "mean": 96.3326,
+      "std": 0.0213
+    },
+    "final_val_micro_top1": {
+      "mean": 81.0896,
+      "std": 0.8324
+    },
+    "final_val_macro_top1": {
+      "mean": 52.5709,
+      "std": 0.2007
+    },
+    "final_val_loss": {
+      "mean": 0.7263,
+      "std": 0.0659
+    },
+    "final_val_top5": {
+      "mean": 95.1102,
+      "std": 0.0854
+    },
+    "stopped_epoch": {
+      "mean": 10.0,
+      "std": 0.0
+    },
+    "config": {
+      "model": "ArtClassifierTinyBased",
+      "dataloader": "canonique",
+      "nb_epochs": 10,
+      "early_stop": null
+    }
+  },
+  "ArtClassifierTinyBased/canonique/10/2": {
+    "num_runs": 2,
+    "best_val_micro_top1": {
+      "mean": 81.9499,
+      "std": 0.4696
+    },
+    "best_val_macro_top1": {
+      "mean": 52.445,
+      "std": 1.0475
+    },
+    "best_val_loss": {
+      "mean": 0.6315,
+      "std": 0.0268
+    },
+    "best_val_top5": {
+      "mean": 95.9101,
+      "std": 0.5763
+    },
+    "final_val_micro_top1": {
+      "mean": 81.2708,
+      "std": 0.9178
+    },
+    "final_val_macro_top1": {
+      "mean": 51.3032,
+      "std": 2.6622
+    },
+    "final_val_loss": {
+      "mean": 0.6438,
+      "std": 0.0364
+    },
+    "final_val_top5": {
+      "mean": 95.8799,
+      "std": 0.619
+    },
+    "stopped_epoch": {
+      "mean": 7.5,
+      "std": 0.7071
+    },
+    "config": {
+      "model": "ArtClassifierTinyBased",
+      "dataloader": "canonique",
+      "nb_epochs": 10,
+      "early_stop": 2
+    }
+  },
+  "ArtClassifierTinyBased/simple/20/none": {
+    "num_runs": 2,
+    "best_val_micro_top1": {
+      "mean": 66.4179,
+      "std": 0.0865
+    },
+    "best_val_macro_top1": {
+      "mean": 11.8242,
+      "std": 0.7572
+    },
+    "best_val_loss": {
+      "mean": 1.101,
+      "std": 0.0132
+    },
+    "best_val_top5": {
+      "mean": 93.0389,
+      "std": 0.3979
+    },
+    "final_val_micro_top1": {
+      "mean": 62.3563,
+      "std": 0.8478
+    },
+    "final_val_macro_top1": {
+      "mean": 9.6186,
+      "std": 0.0052
+    },
+    "final_val_loss": {
+      "mean": 1.3207,
+      "std": 0.0214
+    },
+    "final_val_top5": {
+      "mean": 92.2315,
+      "std": 0.5363
+    },
+    "stopped_epoch": {
+      "mean": 20.0,
+      "std": 0.0
+    },
+    "config": {
+      "model": "ArtClassifierTinyBased",
+      "dataloader": "simple",
+      "nb_epochs": 20,
+      "early_stop": null
+    }
+  },
+  "ArtClassifierTinyBased/simple/20/2": {
+    "num_runs": 2,
+    "best_val_micro_top1": {
+      "mean": 66.8583,
+      "std": 0.0173
+    },
+    "best_val_macro_top1": {
+      "mean": 11.1569,
+      "std": 0.8031
+    },
+    "best_val_loss": {
+      "mean": 1.0896,
+      "std": 0.0013
+    },
+    "best_val_top5": {
+      "mean": 92.3416,
+      "std": 0.4844
+    },
+    "final_val_micro_top1": {
+      "mean": 65.4881,
+      "std": 0.1211
+    },
+    "final_val_macro_top1": {
+      "mean": 11.0413,
+      "std": 0.9666
+    },
+    "final_val_loss": {
+      "mean": 1.1131,
+      "std": 0.0039
+    },
+    "final_val_top5": {
+      "mean": 92.1703,
+      "std": 0.2422
+    },
+    "stopped_epoch": {
+      "mean": 8.0,
+      "std": 1.4142
+    },
+    "config": {
+      "model": "ArtClassifierTinyBased",
+      "dataloader": "simple",
+      "nb_epochs": 20,
+      "early_stop": 2
+    }
+  },
+  "ArtClassifierTinyBased/canonique/20/none": {
+    "num_runs": 2,
+    "best_val_micro_top1": {
+      "mean": 83.2629,
+      "std": 0.1921
+    },
+    "best_val_macro_top1": {
+      "mean": 58.0398,
+      "std": 1.2557
+    },
+    "best_val_loss": {
+      "mean": 0.6412,
+      "std": 0.0226
+    },
+    "best_val_top5": {
+      "mean": 96.1666,
+      "std": 0.0
+    },
+    "final_val_micro_top1": {
+      "mean": 82.4932,
+      "std": 0.4269
+    },
+    "final_val_macro_top1": {
+      "mean": 53.9646,
+      "std": 3.6249
+    },
+    "final_val_loss": {
+      "mean": 1.039,
+      "std": 0.002
+    },
+    "final_val_top5": {
+      "mean": 95.4724,
+      "std": 0.3842
+    },
+    "stopped_epoch": {
+      "mean": 20.0,
+      "std": 0.0
+    },
+    "config": {
+      "model": "ArtClassifierTinyBased",
+      "dataloader": "canonique",
+      "nb_epochs": 20,
+      "early_stop": null
+    }
+  },
+  "ArtClassifierTinyBased/canonique/20/2": {
+    "num_runs": 2,
+    "best_val_micro_top1": {
+      "mean": 81.9348,
+      "std": 0.5336
+    },
+    "best_val_macro_top1": {
+      "mean": 51.6484,
+      "std": 0.8121
+    },
+    "best_val_loss": {
+      "mean": 0.6211,
+      "std": 0.0452
+    },
+    "best_val_top5": {
+      "mean": 95.7742,
+      "std": 0.0854
+    },
+    "final_val_micro_top1": {
+      "mean": 81.7386,
+      "std": 0.2561
+    },
+    "final_val_macro_top1": {
+      "mean": 51.6319,
+      "std": 0.7887
+    },
+    "final_val_loss": {
+      "mean": 0.69,
+      "std": 0.0388
+    },
+    "final_val_top5": {
+      "mean": 95.6686,
+      "std": 0.2348
+    },
+    "stopped_epoch": {
+      "mean": 6.5,
+      "std": 2.1213
+    },
+    "config": {
+      "model": "ArtClassifierTinyBased",
+      "dataloader": "canonique",
+      "nb_epochs": 20,
+      "early_stop": 2
+    }
+  }
+}
