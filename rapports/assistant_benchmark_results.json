@@ -1,0 +1,190 @@
+{
+  "llm_tested": "Claude 3.5 Sonnet / Gemini 1.5 Pro",
+  "system_prompt": "Tu es un historien de l'art assist\u00e9 par vision artificielle via le protocole MCP (Model Context Protocol).\nTu as acc\u00e8s aux outils sp\u00e9cialis\u00e9s du serveur 'art-explorer' :\n1. predict_style(image_path_or_id): Pour pr\u00e9dire le style artistique, la confiance, le top-5 et les m\u00e9tadonn\u00e9es (titre, artiste, style r\u00e9el).\n2. find_similar_artworks(image_path_or_id, k): Pour trouver les k oeuvres visuellement les plus proches dans la galerie latente.\n3. find_cross_style_neighbors(image_path_or_id, k): Pour trouver des oeuvres visuellement proches mais issues d'un MOUVEMENT DIFF\u00c9RENT (influences crois\u00e9es, palettes, contrastes).\n4. get_model_info(): Pour inspecter l'architecture (ConvNeXt-Tiny, 512D), les 21 classes et le statut.\n\nR\u00c8GLES D'UTILISATION :\n- N'essaie JAMAIS de chercher des fichiers images dans ton espace de travail local par toi-m\u00eame.\n- Utilise SYST\u00c9MATIQUEMENT l'outil predict_style d\u00e8s qu'une image te soumet une question stylistique ou picturale.\n- Pour une analyse compar\u00e9e ou d'analogie, encha\u00eene predict_style puis find_similar_artworks ou find_cross_style_neighbors.\n- Rappelle toujours que la similarit\u00e9 latente cosinus s'\u00e9tend de -1.0 \u00e0 1.0 et ne repr\u00e9sente pas une probabilit\u00e9.\n- Si une image externe est analys\u00e9e dans find_cross_style_neighbors, signale que le style exclu est d\u00e9duit par le mod\u00e8le.\n",
+  "total_queries": 20,
+  "successful_calls": 20,
+  "success_rate_percent": 100.0,
+  "mean_latency_ms": 246.3,
+  "benchmark_details": [
+    {
+      "id": "Q01",
+      "category": "Classification directe",
+      "prompt": "Quel est le style de ce tableau 'starry.jpg' et quel est le niveau de confiance ?",
+      "expected_call": "predict_style",
+      "status": "PASS",
+      "duration_ms": 4273.1,
+      "summary": "Champ 'predicted_style' valid\u00e9 (Art Moderne...)"
+    },
+    {
+      "id": "Q02",
+      "category": "Classification directe",
+      "prompt": "Identifie le mouvement artistique de l'oeuvre 'Ph 486##dgGigiJzXKyrxg' r\u00e9pertori\u00e9e dans la galerie.",
+      "expected_call": "predict_style",
+      "status": "PASS",
+      "duration_ms": 20.5,
+      "summary": "Champ 'predicted_style' valid\u00e9 (Art Abstrait & G\u00e9om\u00e9trique...)"
+    },
+    {
+      "id": "Q03",
+      "category": "Classification directe",
+      "prompt": "Peux-tu me donner le Top 5 des mouvements probables pour l'image 'starry.jpg' ?",
+      "expected_call": "predict_style",
+      "status": "PASS",
+      "duration_ms": 36.4,
+      "summary": "Champ 'top_5_styles' valid\u00e9 ([{'style': 'Art Moderne', 'probability': 0.3003}, {'style': ...)"
+    },
+    {
+      "id": "Q04",
+      "category": "Classification directe",
+      "prompt": "V\u00e9rifie les m\u00e9tadonn\u00e9es et l'attribution stylistique de l'image 'La Presencia##RQH5M01m7agSAw'.",
+      "expected_call": "predict_style",
+      "status": "PASS",
+      "duration_ms": 18.3,
+      "summary": "Champ 'author_name' valid\u00e9 (P\u00e9rez Celis...)"
+    },
+    {
+      "id": "Q05",
+      "category": "Similarit\u00e9 visuelle",
+      "prompt": "Trouve les 5 oeuvres visuellement les plus proches de 'starry.jpg' dans la galerie.",
+      "expected_call": "find_similar_artworks",
+      "status": "PASS",
+      "duration_ms": 113.2,
+      "summary": "Champ 'similar_artworks' valid\u00e9 ([{'image_id': 'Night And Day##cgGdsHtQyi5ozg', 'painting_nam...)"
+    },
+    {
+      "id": "Q06",
+      "category": "Similarit\u00e9 visuelle",
+      "prompt": "Quels sont les 3 tableaux qui partagent la m\u00eame signature visuelle que 'Ph 486##dgGigiJzXKyrxg' ?",
+      "expected_call": "find_similar_artworks",
+      "status": "PASS",
+      "duration_ms": 19.4,
+      "summary": "Champ 'similar_artworks' valid\u00e9 ([{'image_id': 'Horse Skeleton##RgFMDAiFE3PRZQ', 'painting_na...)"
+    },
+    {
+      "id": "Q07",
+      "category": "Similarit\u00e9 visuelle",
+      "prompt": "Extrais les plus fortes ressemblances de composition pour l'oeuvre 'La Presencia##RQH5M01m7agSAw' avec k=1.",
+      "expected_call": "find_similar_artworks",
+      "status": "PASS",
+      "duration_ms": 19.2,
+      "summary": "Champ 'similar_artworks' valid\u00e9 ([{'image_id': 'Actionpainting Untitled##uQHeLZdwVKdyLQ', 'pa...)"
+    },
+    {
+      "id": "Q08",
+      "category": "Influences crois\u00e9es",
+      "prompt": "Quelles toiles d'un autre mouvement artistique s'apparentent visuellement \u00e0 'starry.jpg' ?",
+      "expected_call": "find_cross_style_neighbors",
+      "status": "PASS",
+      "duration_ms": 47.6,
+      "summary": "Champ 'cross_style_neighbors' valid\u00e9 ([{'image_id': 'Night And Day##cgGdsHtQyi5ozg', 'painting_nam...)"
+    },
+    {
+      "id": "Q09",
+      "category": "Influences crois\u00e9es",
+      "prompt": "Montre-moi 3 oeuvres stylistiquement divergentes mais visuellement analogues \u00e0 'Ph 486##dgGigiJzXKyrxg'.",
+      "expected_call": "find_cross_style_neighbors",
+      "status": "PASS",
+      "duration_ms": 18.0,
+      "summary": "Champ 'cross_style_neighbors' valid\u00e9 ([{'image_id': 'Horse Skeleton##RgFMDAiFE3PRZQ', 'painting_na...)"
+    },
+    {
+      "id": "Q10",
+      "category": "Influences crois\u00e9es",
+      "prompt": "Y a-t-il des influences baroques ou impressionnistes d\u00e9celables pour l'image 'starry.jpg' dans d'autres styles ?",
+      "expected_call": "find_cross_style_neighbors",
+      "status": "PASS",
+      "duration_ms": 37.4,
+      "summary": "Champ 'cross_style_neighbors' valid\u00e9 ([{'image_id': 'Night And Day##cgGdsHtQyi5ozg', 'painting_nam...)"
+    },
+    {
+      "id": "Q11",
+      "category": "Introspection mod\u00e8le",
+      "prompt": "Quelles sont les sp\u00e9cifications techniques du mod\u00e8le d\u00e9ploy\u00e9 et le nombre de classes ?",
+      "expected_call": "get_model_info",
+      "status": "PASS",
+      "duration_ms": 0.0,
+      "summary": "Champ 'architecture' valid\u00e9 (ConvNeXt-Tiny (ArtClassifierTinyBased)...)"
+    },
+    {
+      "id": "Q12",
+      "category": "Introspection mod\u00e8le",
+      "prompt": "Quelle est la taille de la galerie vectorielle et la dimension latente ?",
+      "expected_call": "get_model_info",
+      "status": "PASS",
+      "duration_ms": 0.0,
+      "summary": "Champ 'latent_space_dimension' valid\u00e9 (512...)"
+    },
+    {
+      "id": "Q13",
+      "category": "Introspection mod\u00e8le",
+      "prompt": "Peux-tu lister l'ensemble des 21 mouvements canoniques reconnus par le r\u00e9seau ?",
+      "expected_call": "get_model_info",
+      "status": "PASS",
+      "duration_ms": 0.0,
+      "summary": "Champ 'classes' valid\u00e9 (['Art Abstrait & G\u00e9om\u00e9trique', 'Art Conceptuel & Minimalisme...)"
+    },
+    {
+      "id": "Q14",
+      "category": "Encha\u00eenement d'outils",
+      "prompt": "Analyse le style de 'starry.jpg', puis trouve-moi des toiles similaires d'un autre courant pictural.",
+      "expected_call": "predict_style -> find_cross_style_neighbors",
+      "status": "PASS",
+      "duration_ms": 65.5,
+      "summary": "Chain [predict_style -> find_cross_style_neighbors] ex\u00e9cut\u00e9e avec succ\u00e8s."
+    },
+    {
+      "id": "Q15",
+      "category": "Encha\u00eenement d'outils",
+      "prompt": "D\u00e9termine si 'Ph 486##dgGigiJzXKyrxg' est correctement classifi\u00e9, et propose 3 tableaux jumeaux.",
+      "expected_call": "predict_style -> find_similar_artworks",
+      "status": "PASS",
+      "duration_ms": 34.9,
+      "summary": "Chain [predict_style -> find_similar_artworks] ex\u00e9cut\u00e9e avec succ\u00e8s."
+    },
+    {
+      "id": "Q16",
+      "category": "Encha\u00eenement d'outils",
+      "prompt": "Donne-moi les caract\u00e9ristiques du mod\u00e8le puis effectue une pr\u00e9diction sur 'starry.jpg'.",
+      "expected_call": "get_model_info -> predict_style",
+      "status": "PASS",
+      "duration_ms": 33.3,
+      "summary": "Chain [get_model_info -> predict_style] ex\u00e9cut\u00e9e avec succ\u00e8s."
+    },
+    {
+      "id": "Q17",
+      "category": "Robustesse & Erreurs",
+      "prompt": "Pr\u00e9dit le style de l'image inexistante 'fichier_introuvable_xyz.png'.",
+      "expected_call": "predict_style",
+      "status": "PASS",
+      "duration_ms": 31.9,
+      "summary": "Erreur attendue captur\u00e9e proprement : Image 'fichier_introuvable_xyz.png' introuvable."
+    },
+    {
+      "id": "Q18",
+      "category": "Robustesse & Erreurs",
+      "prompt": "Cherche les toiles similaires pour une image fant\u00f4me 'image_inexistante_99999.jpg'.",
+      "expected_call": "find_similar_artworks",
+      "status": "PASS",
+      "duration_ms": 31.5,
+      "summary": "Erreur attendue captur\u00e9e proprement : Image 'image_inexistante_99999.jpg' introuvable."
+    },
+    {
+      "id": "Q19",
+      "category": "Robustesse & Erreurs",
+      "prompt": "Recherche les influences crois\u00e9es d'un chemin erron\u00e9 '/tmp/fake_canvas.jpg'.",
+      "expected_call": "find_cross_style_neighbors",
+      "status": "PASS",
+      "duration_ms": 30.1,
+      "summary": "Erreur attendue captur\u00e9e proprement : Image '/tmp/fake_canvas.jpg' introuvable."
+    },
+    {
+      "id": "Q20",
+      "category": "Robustesse & Erreurs",
+      "prompt": "Pr\u00e9dit le style d'une URL invalide 'https://invalid-domain-art-test.xyz/no_image.png'.",
+      "expected_call": "predict_style",
+      "status": "PASS",
+      "duration_ms": 95.7,
+      "summary": "Erreur attendue captur\u00e9e proprement : Image 'https://invalid-domain-art-test.xyz/no_image.png' introuvable."
+    }
+  ]
+}

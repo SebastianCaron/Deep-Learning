@@ -7,10 +7,16 @@ import torch
 import torch.nn as nn
 from torch.utils.data import DataLoader
 
-from loader import get_datasets, load_canonical_data
-from models.pretrained import ArtClassifier, ArtClassifierTinyBased
-from models.custom import CustomArtCNN
-from early_stopping import EarlyStopper
+try:
+    from src.loader import get_datasets, load_canonical_data
+    from src.models.pretrained import ArtClassifier, ArtClassifierTinyBased
+    from src.models.custom import CustomArtCNN
+    from src.early_stopping import EarlyStopper
+except ModuleNotFoundError:
+    from loader import get_datasets, load_canonical_data
+    from models.pretrained import ArtClassifier, ArtClassifierTinyBased
+    from models.custom import CustomArtCNN
+    from early_stopping import EarlyStopper
 
 DEVICE = "cuda" if torch.cuda.is_available() else "cpu"
 PRINT_FREQUENCE = 20

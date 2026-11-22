@@ -2,11 +2,19 @@ import random
 from pathlib import Path
 from PIL import Image
 from collections import defaultdict
-
+import numpy as np
 import torch
 from torchvision.transforms import v2
 from torchvision import datasets
 from torch.utils.data import Dataset
+
+
+def set_seed(seed: int = 42):
+    random.seed(seed)
+    np.random.seed(seed)
+    torch.manual_seed(seed)
+    if torch.cuda.is_available():
+        torch.cuda.manual_seed_all(seed)
 
 TAXONOMY_MAPPING = {
     # 1. Renaissance (Italienne, Nordique, Allemande, Flamande, etc.)
@@ -218,7 +226,7 @@ def load_canonical_data(
     if test_ratio is None:
         test_ratio = max(0.0, round(1.0 - train_ratio - val_ratio, 4))
 
-    random.seed(seed)
+    set_seed(seed)
     train_samples = []
     val_samples = []
     test_samples = []
@@ -286,7 +294,7 @@ def get_datasets(
     if test_ratio is None:
         test_ratio = max(0.0, round(1.0 - train_ratio - val_ratio, 4))
 
-    random.seed(seed)
+    set_seed(seed)
     class_to_indices = defaultdict(list)
     for idx, (_, target) in enumerate(base_dataset.samples):
         class_to_indices[target].append(idx)

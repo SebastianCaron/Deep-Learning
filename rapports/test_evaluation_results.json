@@ -1,0 +1,152 @@
+{
+  "checkpoint": "./checkpoints/best_model.pth",
+  "nb_test_samples": 1663,
+  "nb_classes": 21,
+  "test_loss": 0.6481,
+  "micro_top1_acc": 81.36,
+  "macro_top1_recall": 50.16,
+  "top5_acc": 96.39,
+  "macro_roc_auc_ovr": 0.9681,
+  "macro_mAP": 0.5703,
+  "classification_report": {
+    "Art Abstrait & G\u00e9om\u00e9trique": {
+      "precision": 0.391304347826087,
+      "recall": 0.6428571428571429,
+      "f1-score": 0.4864864864864865,
+      "support": 14.0
+    },
+    "Art Conceptuel & Minimalisme": {
+      "precision": 0.25,
+      "recall": 0.2727272727272727,
+      "f1-score": 0.2608695652173913,
+      "support": 11.0
+    },
+    "Art Contemporain": {
+      "precision": 0.48148148148148145,
+      "recall": 0.2826086956521739,
+      "f1-score": 0.3561643835616438,
+      "support": 46.0
+    },
+    "Art Gothique & M\u00e9di\u00e9val": {
+      "precision": 0.5,
+      "recall": 0.2857142857142857,
+      "f1-score": 0.36363636363636365,
+      "support": 7.0
+    },
+    "Art Japonais (Ukiyo-e)": {
+      "precision": 0.8409090909090909,
+      "recall": 0.9024390243902439,
+      "f1-score": 0.8705882352941177,
+      "support": 41.0
+    },
+    "Art Moderne": {
+      "precision": 0.4444444444444444,
+      "recall": 0.3333333333333333,
+      "f1-score": 0.38095238095238093,
+      "support": 48.0
+    },
+    "Art Nouveau & Symbolisme": {
+      "precision": 0.2727272727272727,
+      "recall": 0.12,
+      "f1-score": 0.16666666666666666,
+      "support": 25.0
+    },
+    "Baroque & Si\u00e8cle d'Or": {
+      "precision": 0.6349206349206349,
+      "recall": 0.7272727272727273,
+      "f1-score": 0.6779661016949152,
+      "support": 110.0
+    },
+    "Cubisme & Futurisme": {
+      "precision": 0.2857142857142857,
+      "recall": 0.3333333333333333,
+      "f1-score": 0.3076923076923077,
+      "support": 6.0
+    },
+    "Expressionnisme": {
+      "precision": 0.46153846153846156,
+      "recall": 1.0,
+      "f1-score": 0.631578947368421,
+      "support": 12.0
+    },
+    "Impressionnisme": {
+      "precision": 0.625,
+      "recall": 0.25,
+      "f1-score": 0.35714285714285715,
+      "support": 20.0
+    },
+    "Mani\u00e9risme": {
+      "precision": 0.42857142857142855,
+      "recall": 0.13043478260869565,
+      "f1-score": 0.2,
+      "support": 23.0
+    },
+    "N\u00e9oclassicisme & Acad\u00e9misme": {
+      "precision": 0.18181818181818182,
+      "recall": 0.06896551724137931,
+      "f1-score": 0.1,
+      "support": 29.0
+    },
+    "Post-Impressionnisme": {
+      "precision": 0.42857142857142855,
+      "recall": 0.3333333333333333,
+      "f1-score": 0.375,
+      "support": 9.0
+    },
+    "Renaissance": {
+      "precision": 0.6928571428571428,
+      "recall": 0.7698412698412699,
+      "f1-score": 0.7293233082706767,
+      "support": 126.0
+    },
+    "Rococo": {
+      "precision": 0.75,
+      "recall": 0.5121951219512195,
+      "f1-score": 0.6086956521739131,
+      "support": 41.0
+    },
+    "Romantisme & Paysagisme": {
+      "precision": 0.375,
+      "recall": 0.5675675675675675,
+      "f1-score": 0.45161290322580644,
+      "support": 37.0
+    },
+    "R\u00e9alisme & Naturalisme": {
+      "precision": 0.49473684210526314,
+      "recall": 0.7014925373134329,
+      "f1-score": 0.5802469135802469,
+      "support": 67.0
+    },
+    "R\u00e9alisme Social": {
+      "precision": 0.9987484355444305,
+      "recall": 0.9937733499377335,
+      "f1-score": 0.9962546816479401,
+      "support": 803.0
+    },
+    "Street Art & Art Public": {
+      "precision": 0.9123711340206185,
+      "recall": 0.9725274725274725,
+      "f1-score": 0.9414893617021277,
+      "support": 182.0
+    },
+    "Surr\u00e9alisme & Dada": {
+      "precision": 1.0,
+      "recall": 0.3333333333333333,
+      "f1-score": 0.5,
+      "support": 6.0
+    },
+    "accuracy": 0.8135898977751053,
+    "macro avg": {
+      "precision": 0.5452721244309644,
+      "recall": 0.5016071476636167,
+      "f1-score": 0.49249367220544105,
+      "support": 1663.0
+    },
+    "weighted avg": {
+      "precision": 0.8083013442769177,
+      "recall": 0.8135898977751053,
+      "f1-score": 0.8031005248132022,
+      "support": 1663.0
+    }
+  }
+}

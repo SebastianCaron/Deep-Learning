@@ -1,0 +1,10 @@
+{
+  "nb_query_samples": 1663,
+  "gallery_size": 1663,
+  "metrics": {
+    "Precision@1": 78.95,
+    "Precision@3": 77.43,
+    "Precision@5": 76.37,
+    "Precision@10": 74.7
+  }
+}

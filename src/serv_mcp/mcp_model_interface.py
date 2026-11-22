@@ -1,3 +1,5 @@
+from __future__ import annotations
+
 import sys
 from pathlib import Path
 
@@ -10,7 +12,7 @@ import src.serv_mcp.utils as utils
 
 
 class ModelEngine:
-    _instance: "ModelEngine" | None = None
+    _instance: ModelEngine | None = None
 
     def __init__(
         self,

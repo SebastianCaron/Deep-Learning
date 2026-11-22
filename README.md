@@ -101,11 +101,38 @@ Pour évaluer différentes combinaisons (architectures, stratégies d'early stop
 python3 src/measures.py
 ```
 
+### Évaluation finale sur le jeu de test (10% inédit — 1 663 images)
+Calcule l'ensemble des métriques d'évaluation (Micro/Macro Top-1, Top-5, Macro ROC-AUC OvR, mAP, rapport par classe) :
+```bash
+python3 src/evaluate_test.py
+```
+
+### Validation croisée stratifiée (3 plis) & Étude d'ablation
+```bash
+# Lancer la validation croisée stratifiée à 3 plis
+python3 src/cross_validation.py
+
+# Lancer l'étude d'ablation systématique (Backbone gelé, sans BatchNorm, sans Dropout, sans espace latent)
+python3 src/ablation.py
+```
+
+### Explicabilité & Vérification de l'absence de raccourcis (Grad-CAM)
+Génère les cartes thermiques d'attribution sur le dernier bloc de ConvNeXt-Tiny (`features[7][-1]`) :
+```bash
+python3 src/gradcam.py
+```
+
+### Génération de l'ensemble des graphiques du rapport (dégradé bleu pastel)
+Régénère l'ensemble des figures du rapport (`rapports/*.png`) avec la palette unifiée bleu pastel :
+```bash
+python3 src/generate_plots.py
+```
+
 ---
 
-## 4. Serveur MCP (Model Context Protocol)
+## 4. Serveur MCP (Model Context Protocol) & Assistant
 
-Le serveur MCP (`src/serv_mcp/`) permet à un assistant IA (Claude Desktop, Cursor, Antigravity, etc.) d'interagir directement avec le modèle de vision.
+Le serveur MCP (`src/serv_mcp/`) permet à un assistant IA (Claude Desktop, Cursor, Antigravity, Gemini) d'interagir directement avec notre réseau spécialiste ConvNeXt-Tiny.
 
 ### Étape 1 : Construire l'index de la galerie d'oeuvres
 Avant de démarrer le serveur, extrayez les représentations latentes des oeuvres du jeu de validation :
@@ -114,18 +141,30 @@ python3 -m src.serv_mcp.build_index
 ```
 Cette commande génère le fichier `checkpoints/gallery_index.pt`.
 
-### Étape 2 : Lancer le serveur MCP
+### Étape 2 : Évaluation de la recherche par similarité (Precision@k)
+Mesure la pertinence stylistique des voisins retournés dans la galerie (Precision@1, Precision@3, Precision@5, Precision@10) :
+```bash
+python3 src/evaluate_mcp.py
+```
+
+### Étape 3 : Benchmark automatisé de l'assistant (20 requêtes types)
+Exécute le banc d'essai complet testant les appels directs, l'enchaînement d'outils (*tool chaining*) et la robustesse aux erreurs :
+```bash
+python3 -m src.serv_mcp.bench_assistant
+```
+
+### Étape 4 : Lancer le serveur MCP
 ```bash
 python3 -m src.serv_mcp.mcp_server
 ```
 
 ### Outils disponibles via MCP
-| Outil | Description |
-|---|---|
-| `predict_style` | Prédit le style artistique d'une image locale ou d'un identifiant (top 5 des styles, score de confiance, métadonnées). |
-| `find_similar_artworks` | Trouve les $k$ oeuvres les plus proches visuellement par similarité cosinus dans l'espace latent 512D. |
-| `find_cross_style_neighbors` | Trouve des oeuvres visuellement proches mais issues d'un **autre style** (idéal pour étudier les influences croisées). |
-| `get_model_info` | Fournit les détails du modèle en mémoire, la liste des classes et le volume de la galerie. |
+| Outil | Paramètres | Description |
+|---|---|---|
+| `predict_style` | `image_path_or_id: str` | Prédit le style artistique d'une image locale, d'une URL ou d'un identifiant (Top 5 des styles, score de confiance, métadonnées). |
+| `find_similar_artworks` | `image_path_or_id: str`, `k: int = 5` | Trouve les $k$ oeuvres les plus proches visuellement par **similarité cosinus** dans l'espace latent 512D (score entre -1.0 et 1.0). |
+| `find_cross_style_neighbors` | `image_path_or_id: str`, `k: int = 5` | Trouve des oeuvres visuellement proches mais issues d'un **style différent** (exclut le style réel ou prédit pour une image externe). |
+| `get_model_info` | *Aucun* | Fournit les détails techniques du modèle en mémoire (ConvNeXt-Tiny, 512D), les 21 classes canoniques et la taille de la galerie. |
 
 ### Configuration client (ex. Claude Desktop / Cursor / Antigravity)
 Ajoutez la configuration suivante dans votre fichier de configuration MCP (`claude_desktop_config.json` ou équivalent) :
@@ -141,3 +180,22 @@ Ajoutez la configuration suivante dans votre fichier de configuration MCP (`clau
   }
 }
 ```
+
+### Prompt Système recommandé pour l'assistant LLM
+Pour guider l'assistant à utiliser les outils systématiquement et éviter qu'il ne cherche les images dans son environnement local :
+
+```text
+Tu es un historien de l'art assisté par vision artificielle via MCP.
+Tu as accès aux outils spécialisés du serveur 'art-explorer' :
+- predict_style : pour prédire le style artistique, la confiance, le top 5 et les métadonnées.
+- find_similar_artworks : pour trouver les oeuvres les plus proches dans la galerie latente 512D.
+- find_cross_style_neighbors : pour trouver des oeuvres analogues d'un AUTRE courant artistique.
+- get_model_info : pour inspecter l'architecture (ConvNeXt-Tiny) et les 21 classes canoniques.
+
+Règles impératives :
+1. N'essaie JAMAIS de chercher des fichiers images par toi-même dans l'espace de fichiers local.
+2. Appelle SYSTÉMATIQUEMENT predict_style dès qu'une image est mentionnée.
+3. Pour des analyses d'influence, enchaîne predict_style puis find_cross_style_neighbors.
+4. Présente toujours la similarité cosinus comme un score entre -1.0 et 1.0 (et non une probabilité).
+```
+
