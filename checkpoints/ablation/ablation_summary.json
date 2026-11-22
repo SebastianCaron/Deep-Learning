@@ -1,0 +1,101 @@
+{
+  "baseline": {
+    "config_name": "baseline",
+    "description": "Mod\u00e8le complet de r\u00e9f\u00e9rence (ConvNeXt-Tiny + Latent Space 512 + BN + GELU + Dropout 0.4)",
+    "model_kwargs": {
+      "use_bn": true,
+      "use_latent": true,
+      "dropout": 0.4,
+      "activation": "gelu",
+      "freeze_backbone": false
+    },
+    "trainable_params": 28225653,
+    "best_val_micro_top1": 81.5877,
+    "best_val_macro_top1": 50.1841,
+    "best_val_top5": 96.1666,
+    "best_val_loss": 0.6323,
+    "final_val_micro_top1": 80.8935,
+    "final_val_loss": 0.6759,
+    "stopped_epoch": 8,
+    "run_duration_sec": 1528.06
+  },
+  "no_batchnorm": {
+    "config_name": "no_batchnorm",
+    "description": "Ablation de la BatchNorm1d dans l'espace latent",
+    "model_kwargs": {
+      "use_bn": false,
+      "use_latent": true,
+      "dropout": 0.4,
+      "activation": "gelu",
+      "freeze_backbone": false
+    },
+    "trainable_params": 28224629,
+    "best_val_micro_top1": 81.7688,
+    "best_val_macro_top1": 49.6689,
+    "best_val_top5": 95.8044,
+    "best_val_loss": 0.6045,
+    "final_val_micro_top1": 81.7688,
+    "final_val_loss": 0.6108,
+    "stopped_epoch": 5,
+    "run_duration_sec": 948.9
+  },
+  "no_dropout": {
+    "config_name": "no_dropout",
+    "description": "Ablation du Dropout (p=0.0) dans l'espace latent",
+    "model_kwargs": {
+      "use_bn": true,
+      "use_latent": true,
+      "dropout": 0.0,
+      "activation": "gelu",
+      "freeze_backbone": false
+    },
+    "trainable_params": 28225653,
+    "best_val_micro_top1": 81.316,
+    "best_val_macro_top1": 52.1306,
+    "best_val_top5": 95.895,
+    "best_val_loss": 0.6734,
+    "final_val_micro_top1": 81.1349,
+    "final_val_loss": 0.8319,
+    "stopped_epoch": 6,
+    "run_duration_sec": 1144.92
+  },
+  "no_latent_space": {
+    "config_name": "no_latent_space",
+    "description": "Ablation du goulot d'\u00e9tranglement latent (Classifieur lin\u00e9aire direct 768 -> nb_classes)",
+    "model_kwargs": {
+      "use_bn": false,
+      "use_latent": false,
+      "dropout": 0.0,
+      "freeze_backbone": false
+    },
+    "trainable_params": 27836277,
+    "best_val_micro_top1": 82.1612,
+    "best_val_macro_top1": 50.0646,
+    "best_val_top5": 96.0459,
+    "best_val_loss": 0.6153,
+    "final_val_micro_top1": 82.1612,
+    "final_val_loss": 0.6903,
+    "stopped_epoch": 5,
+    "run_duration_sec": 949.81
+  },
+  "frozen_backbone": {
+    "config_name": "frozen_backbone",
+    "description": "Ablation du fine-tuning (Backbone ConvNeXt-Tiny gel\u00e9, entra\u00eenement de la t\u00eate uniquement)",
+    "model_kwargs": {
+      "use_bn": true,
+      "use_latent": true,
+      "dropout": 0.4,
+      "activation": "gelu",
+      "freeze_backbone": true
+    },
+    "trainable_params": 405525,
+    "best_val_micro_top1": 79.5955,
+    "best_val_macro_top1": 44.7293,
+    "best_val_top5": 94.6876,
+    "best_val_loss": 0.8059,
+    "final_val_micro_top1": 79.5955,
+    "final_val_loss": 0.8059,
+    "stopped_epoch": 10,
+    "run_duration_sec": 986.44
+  }
+}

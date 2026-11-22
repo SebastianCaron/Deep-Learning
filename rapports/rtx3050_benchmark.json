@@ -1,0 +1,53 @@
+{
+  "CustomArtCNN": {
+    "gpu": "NVIDIA GeForce RTX 3050 Laptop GPU",
+    "train_duration_sec": 227.98,
+    "train_duration_min": 3.8,
+    "train_fps": 58.33,
+    "val_duration_sec": 32.64,
+    "val_fps": 101.49,
+    "total_epoch_sec": 260.62,
+    "total_epoch_min": 4.34,
+    "peak_vram_mb": 1729.7,
+    "train_loss": 4.611,
+    "train_top1": 46.43,
+    "val_loss": 2.3993,
+    "val_micro_top1": 60.91,
+    "val_macro_top1": 13.59,
+    "val_top5": 80.92
+  },
+  "ArtClassifier": {
+    "gpu": "NVIDIA GeForce RTX 3050 Laptop GPU",
+    "train_duration_sec": 136.73,
+    "train_duration_min": 2.28,
+    "train_fps": 97.26,
+    "val_duration_sec": 20.66,
+    "val_fps": 160.34,
+    "total_epoch_sec": 157.4,
+    "total_epoch_min": 2.62,
+    "peak_vram_mb": 1499.4,
+    "train_loss": 2.2773,
+    "train_top1": 58.05,
+    "val_loss": 0.8658,
+    "val_micro_top1": 74.58,
+    "val_macro_top1": 28.49,
+    "val_top5": 91.25
+  },
+  "ArtClassifierTinyBased": {
+    "gpu": "NVIDIA GeForce RTX 3050 Laptop GPU",
+    "train_duration_sec": 169.34,
+    "train_duration_min": 2.82,
+    "train_fps": 78.54,
+    "val_duration_sec": 27.78,
+    "val_fps": 119.25,
+    "total_epoch_sec": 197.12,
+    "total_epoch_min": 3.29,
+    "peak_vram_mb": 1991.2,
+    "train_loss": 2.4418,
+    "train_top1": 59.68,
+    "val_loss": 0.917,
+    "val_micro_top1": 74.13,
+    "val_macro_top1": 27.02,
+    "val_top5": 92.09
+  }
+}

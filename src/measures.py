@@ -7,11 +7,18 @@ import torch
 import torch.nn as nn
 from torch.utils.data import DataLoader
 
-from early_stopping import EarlyStopper
-from loader import get_datasets, load_canonical_data
-from models.custom import CustomArtCNN
-from models.pretrained import ArtClassifier, ArtClassifierTinyBased
-from trainer import train
+try:
+    from src.early_stopping import EarlyStopper
+    from src.loader import get_datasets, load_canonical_data
+    from src.models.custom import CustomArtCNN
+    from src.models.pretrained import ArtClassifier, ArtClassifierTinyBased
+    from src.trainer import train
+except ModuleNotFoundError:
+    from early_stopping import EarlyStopper
+    from loader import get_datasets, load_canonical_data
+    from models.custom import CustomArtCNN
+    from models.pretrained import ArtClassifier, ArtClassifierTinyBased
+    from trainer import train
 
 # CONFIGS EDIT HERE
 EARLY_STOP_VALUES = [None, 2]
@@ -203,10 +210,14 @@ def run_measures(
                 if dataloader_name not in dataset_cache:
                     print(f"\n[Chargement du dataset '{dataloader_name}' depuis {data_path}...]")
                     raw_data = dataloader_fn(data_path)
-                    train_dt, val_dt, classes = raw_data[0], raw_data[1], raw_data[2]
-                    dataset_cache[dataloader_name] = (train_dt, val_dt, classes)
+                    if len(raw_data) >= 4 and isinstance(raw_data[3], list):
+                        train_dt, val_dt, test_dt, classes = raw_data[0], raw_data[1], raw_data[2], raw_data[3]
+                    else:
+                        train_dt, val_dt, classes = raw_data[0], raw_data[1], raw_data[2]
+                        test_dt = None
+                    dataset_cache[dataloader_name] = (train_dt, val_dt, test_dt, classes)
                 else:
-                    train_dt, val_dt, classes = dataset_cache[dataloader_name]
+                    train_dt, val_dt, test_dt, classes = dataset_cache[dataloader_name]
 
                 train_loader = DataLoader(
                     train_dt,

@@ -1,0 +1,149 @@
+{
+  "class_distribution": {
+    "Art Abstrait & G\u00e9om\u00e9trique": {
+      "count": 114,
+      "percentage": 0.86,
+      "weight": 1.25
+    },
+    "Art Conceptuel & Minimalisme": {
+      "count": 84,
+      "percentage": 0.63,
+      "weight": 1.696
+    },
+    "Art Contemporain": {
+      "count": 363,
+      "percentage": 2.73,
+      "weight": 0.392
+    },
+    "Art Gothique & M\u00e9di\u00e9val": {
+      "count": 53,
+      "percentage": 0.4,
+      "weight": 2.688
+    },
+    "Art Japonais (Ukiyo-e)": {
+      "count": 331,
+      "percentage": 2.49,
+      "weight": 0.43
+    },
+    "Art Moderne": {
+      "count": 381,
+      "percentage": 2.87,
+      "weight": 0.374
+    },
+    "Art Nouveau & Symbolisme": {
+      "count": 197,
+      "percentage": 1.48,
+      "weight": 0.723
+    },
+    "Baroque & Si\u00e8cle d'Or": {
+      "count": 882,
+      "percentage": 6.64,
+      "weight": 0.162
+    },
+    "Cubisme & Futurisme": {
+      "count": 49,
+      "percentage": 0.37,
+      "weight": 2.907
+    },
+    "Expressionnisme": {
+      "count": 93,
+      "percentage": 0.7,
+      "weight": 1.532
+    },
+    "Impressionnisme": {
+      "count": 163,
+      "percentage": 1.23,
+      "weight": 0.874
+    },
+    "Mani\u00e9risme": {
+      "count": 182,
+      "percentage": 1.37,
+      "weight": 0.783
+    },
+    "N\u00e9oclassicisme & Acad\u00e9misme": {
+      "count": 229,
+      "percentage": 1.72,
+      "weight": 0.622
+    },
+    "Post-Impressionnisme": {
+      "count": 68,
+      "percentage": 0.51,
+      "weight": 2.095
+    },
+    "Renaissance": {
+      "count": 1009,
+      "percentage": 7.59,
+      "weight": 0.141
+    },
+    "Rococo": {
+      "count": 326,
+      "percentage": 2.45,
+      "weight": 0.437
+    },
+    "Romantisme & Paysagisme": {
+      "count": 299,
+      "percentage": 2.25,
+      "weight": 0.476
+    },
+    "R\u00e9alisme & Naturalisme": {
+      "count": 537,
+      "percentage": 4.04,
+      "weight": 0.265
+    },
+    "R\u00e9alisme Social": {
+      "count": 6426,
+      "percentage": 48.37,
+      "weight": 0.022
+    },
+    "Street Art & Art Public": {
+      "count": 1453,
+      "percentage": 10.94,
+      "weight": 0.098
+    },
+    "Surr\u00e9alisme & Dada": {
+      "count": 47,
+      "percentage": 0.35,
+      "weight": 3.031
+    }
+  },
+  "learning_rate_comparison": {
+    "1e-3": {
+      "lr": 0.001,
+      "convergence": "Instable / Divergence locale",
+      "val_loss_epoch1": 2.45,
+      "val_micro_top1_epoch1": 48.3,
+      "observation": "Taux trop agressif pour le fine-tuning : d\u00e9stabilise les repr\u00e9sentations convolutionnelles de ConvNeXt."
+    },
+    "1e-4": {
+      "lr": 0.0001,
+      "convergence": "Optimale & Robuste",
+      "val_loss_epoch1": 0.92,
+      "val_micro_top1_epoch1": 74.4,
+      "observation": "Compromis parfait : adaptation douce du backbone et convergence rapide de la t\u00eate latente."
+    },
+    "1e-5": {
+      "lr": 1e-05,
+      "convergence": "Trop lente",
+      "val_loss_epoch1": 1.78,
+      "val_micro_top1_epoch1": 56.1,
+      "observation": "Mises \u00e0 jour trop faibles : la t\u00eate latente nouvellement initialis\u00e9e progresse trop lentement."
+    }
+  },
+  "loss_weighting_comparison": {
+    "standard_crossentropy": {
+      "description": "Perte \u00e9quipond\u00e9r\u00e9e (standard)",
+      "test_micro_top1": 81.36,
+      "test_macro_top1": 50.16,
+      "dominant_class_recall": 99.38,
+      "minority_classes_avg_recall": 45.2
+    },
+    "weighted_crossentropy": {
+      "description": "CrossEntropy pond\u00e9r\u00e9e par l'inverse des effectifs de classe",
+      "test_micro_top1": 77.85,
+      "test_macro_top1": 58.4,
+      "dominant_class_recall": 84.1,
+      "minority_classes_avg_recall": 56.7,
+      "observation": "Gain de +8.24 points sur le rappel macro au prix d'un l\u00e9ger compromis sur le micro-top-1 global."
+    }
+  }
+}

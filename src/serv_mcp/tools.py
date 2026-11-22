@@ -65,8 +65,9 @@ def find_similar_artworks(image_path_or_id: str, k: int = 5) -> dict:
             "author_name": engine.gallery["authors"][i],
             "style": engine.gallery["true_styles"][i],
             "predicted_style": engine.gallery["pred_styles"][i],
+            "cosine_similarity": round(score.item(), 4),
             "similarity_score": round(score.item(), 4),
-            "similarity_percentage": f"{max(0.0, score.item()) * 100:.1f}%",
+            "similarity_scale": "[-1.0, 1.0]",
             "path": engine.gallery["paths"][i],
         })
 
@@ -79,6 +80,7 @@ def find_similar_artworks(image_path_or_id: str, k: int = 5) -> dict:
         },
         "k": k,
         "total_gallery_size": len(engine.gallery["paths"]),
+        "metric": "cosine_similarity (valeur entre -1.0 et 1.0, non assimilable à une probabilité)",
         "similar_artworks": neighbors,
     }
 
@@ -93,6 +95,7 @@ def find_cross_style_neighbors(image_path_or_id: str, k: int = 5) -> dict:
     tensor = engine.load_tensor(path)
     query_emb, probs = engine.extract_embedding_and_probs(tensor)
 
+    has_true_style = bool(meta.get("true_style"))
     ref_style = meta.get("true_style") or engine.classes[probs.argmax().item()]
 
     sims = F.cosine_similarity(query_emb, engine.gallery_embeddings, dim=-1).cpu()
@@ -113,12 +116,13 @@ def find_cross_style_neighbors(image_path_or_id: str, k: int = 5) -> dict:
             "painting_name": engine.gallery["titles"][i],
             "author_name": engine.gallery["authors"][i],
             "different_style": engine.gallery["true_styles"][i],
+            "cosine_similarity": round(score.item(), 4),
             "similarity_score": round(score.item(), 4),
-            "similarity_percentage": f"{max(0.0, score.item()) * 100:.1f}%",
+            "similarity_scale": "[-1.0, 1.0]",
             "path": engine.gallery["paths"][i],
             "stylistic_observation": (
                 f"Bien qu'étiqueté comme '{engine.gallery['true_styles'][i]}', ce tableau partage "
-                f"{max(0.0, score.item()) * 100:.1f}% de similarité latente avec '{meta['painting_name']}'."
+                f"une similarité cosinus de {score.item():.2f} (sur une échelle de -1.0 à 1.0) avec '{meta['painting_name']}'."
             )
         })
 
@@ -128,8 +132,15 @@ def find_cross_style_neighbors(image_path_or_id: str, k: int = 5) -> dict:
             "painting_name": meta["painting_name"],
             "author_name": meta["author_name"],
             "reference_style": ref_style,
+            "reference_style_source": "dataset_metadata" if has_true_style else "predicted_by_model",
+            "reference_style_note": (
+                "Style réel vérifié issu des métadonnées du dataset."
+                if has_true_style
+                else f"Attention : oeuvre externe sans étiquette officielle ; le style exclu est le style prédit par le modèle ('{ref_style}') et non le style réel vérifié."
+            ),
         },
         "k": k,
+        "metric": "cosine_similarity (valeur entre -1.0 et 1.0, non assimilable à une probabilité)",
         "cross_style_neighbors": cross_neighbors,
     }
 
